@@ -23,7 +23,7 @@
 
 # For more information, please refer to <https://unlicense.org>
 
-import DiscTools
+import disctools
 from discord.ext import commands
 import logging
 
@@ -32,10 +32,10 @@ logging.basicConfig(
     datefmt="[%X]",
     level=logging.INFO
 )
-Bot = DiscTools.Bot("~")
+Bot = disctools.Bot("~")
 
 @Bot.inject(name="Test", invoke_without_subcommand=False)
-class test(DiscTools.CCmd):
+class test(disctools.CCmd):
     async def main(self, ctx):
         await ctx.send("PASS")
     
@@ -45,8 +45,8 @@ class test(DiscTools.CCmd):
     async def subcommand_after_invoke(self, ctx):
         await ctx.send("Test after hook PASS")
 
-    @DiscTools.inject()
-    class First(DiscTools.Command):
+    @disctools.inject()
+    class First(disctools.Command):
         # Usage: `[p]Test First Hi!`
         async def pre_invoke(self, parent, ctx):
             return await ctx.send("Preparing...")
@@ -57,7 +57,7 @@ class test(DiscTools.CCmd):
         async def post_invoke(self, parent, ctx):
             return await ctx.send("Exiting...")
 
-    class Second(DiscTools.ICommand, aliases=["s"]):
+    class Second(disctools.ICommand, aliases=["s"]):
         # Usage: `[p]Test [Second|s] Hi!`
         async def main(self, parent, ctx, *, msg: str = "PASSS"):
             """Interact with discord here, you may write everthing here."""
@@ -69,8 +69,8 @@ class test(DiscTools.CCmd):
             This is not enforced but recommended, so that it ts easier to migrate from discord's platform"""
             return msg
 
-    # You may do this but, without DiscTools.Command or else you lose the self argument.
-    @commands.command(cls=DiscTools.Command, name="Third")
+    # You may do this but, without disctools.Command or else you lose the self argument.
+    @commands.command(cls=disctools.Command, name="Third")
     async def third(self, ctx, *, msg: str = "PASSS"):
         return await ctx.send(msg)
 
