@@ -1,8 +1,11 @@
 from setuptools import setup
-import disctools
 
 with open("README.md", "r") as ReadHead:
     long_description = ReadHead.read()
+
+requirements = []
+with open('requirements.txt') as f:
+  requirements = f.read().splitlines()
 
 setup(
     name="DiscTools",
@@ -12,6 +15,7 @@ setup(
     description="discord.py helper classes, functions & alternatives",
     long_description=long_description,
     long_description_content_type="text/markdown",
+    install_requires=requirements,
     # url="https://github.com/pypa/sampleproject",
     license='MIT',
     packages=[
@@ -27,7 +31,7 @@ setup(
         "Programming Language :: Python :: Implementation :: CPython"
     ],
     python_requires='>=3.6',
-    extra_requires={
+    extras_require={
         "docs": [
             "Sphinx~=3.1.2",
             "sphinx-rtd-theme~=0.5.0"
