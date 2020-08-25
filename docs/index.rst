@@ -7,7 +7,9 @@ This library is about discord.py helper classes, functions and alternatives, whi
 
 Installation
 ------------
-*In Progress*
+Can be simply done with ``pip install DiscTools``.
+Or you can get the freshly harvested code by ``pip install git+https://github.com/TEEN-BOOM/DiscTools.git@master#egg=DiscTools``
+
 
 Example
 -------
@@ -73,11 +75,11 @@ A basic Bot using DiscTools
    :maxdepth: 2
    :caption: Contents:
 
-   src/Commands.rst
-   src/Bot.rst
-   src/Context.rst
-   src/Abstractions.rst
-   src/Experimental.rst
+   Commands.rst
+   Bot.rst
+   Context.rst
+   Abstractions.rst
+   Experimental.rst
 
 
 Indices and tables

@@ -47,16 +47,16 @@ class Context(_Context):
         """Salt and peppa."""
         super().__init__(**kwargs)
         self._target = None
-        self.target = self.message.mentions
+        self.targets = self.message.mentions
     
     @property
-    def target(self):
-        """Sequence[:class:`discord.Member`] : A list of Members that were mentioned, this shall be set on invoke.
+    def targets(self):
+        """Sequence[:class:`discord.Member`] : A sequence of Members that were mentioned, this shall be set on invoke.
         By default it is set to a list of mentions in the message"""
         return self._target
 
-    @target.setter
-    def target(self, user: Sequence[discord.Member]) -> None:
+    @targets.setter
+    def  targets(self, user: Union[discord.Member, Sequence[discord.Member]]) -> None:
         if not isinstance(user, Sequence):
             self._target = [user]
         else:
@@ -68,7 +68,7 @@ class Context(_Context):
         Parameters
         ----------
         user : Optional[:class:`discord.Member`]
-            The user to check, if None then ctx.authour is used. By default None
+            The user to check, if None then ctx.author is used. By default None
 
         Returns
         -------
@@ -76,12 +76,12 @@ class Context(_Context):
             True if the user is the author, else False
         """
         if user is None:
-            return self.author in self.target
+            return self.author in self.targets
 
         return self.author == user
 
     def is_above(self, user: discord.Member = None) -> bool:
-        """Check if author is above target.
+        """Check if author is above  targets.
 
         Parameters
         ----------
@@ -91,12 +91,12 @@ class Context(_Context):
         Returns
         -------
         bool
-            True if user above target else False
+            True if user above targets else False
         """
         if user == self.author:
             return False # REASON:: [1>1 is False]
         if user is None:
-            user = self.target[0]
+            user = self.targets[0]
         if self.author == self.guild.owner:
             return True
         if user is not None:
@@ -111,7 +111,7 @@ class Context(_Context):
         Parameters
         ----------
         user : Optional(Union[:class:`discord.Member`, List[discord.Member]])
-            The member(s) to DM. Defaults to self.target.
+            The member(s) to DM. Defaults to self.targets.
         args
             The positional arguments that should be used to message the targets.
         kwargs
@@ -122,7 +122,7 @@ class Context(_Context):
             NoneType
         """                      
         if user is None:
-            user = self.target
+            user = self.targets
         if not isinstance(user, Sequence):
             return await user.send(*args, **kwargs)
         else:

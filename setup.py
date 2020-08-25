@@ -1,4 +1,5 @@
 from setuptools import setup
+from disctools.__version_info__ import __version__ as version
 
 with open("README.md", "r") as ReadHead:
     long_description = ReadHead.read()
@@ -9,7 +10,7 @@ with open('requirements.txt') as f:
 
 setup(
     name="DiscTools",
-    version="0.1.0",
+    version=version,
     author="teen_boom",
     author_email="ojasscoding@gmail.com",
     description="discord.py helper classes, functions & alternatives",

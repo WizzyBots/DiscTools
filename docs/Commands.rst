@@ -13,11 +13,14 @@ Command Types
 Commands
 --------
 .. autoclass:: disctools.commands.Command
+    :no-undoc-members:
     :members:
 
 .. autoclass:: disctools.commands.CCmd
+    :members:
 
-This class is a subclass of :class:`disctools.commands.Command`
+.. autoclass:: disctools.commands.CogCmd
+
 
 Pre-Injected Commands
 ---------------------
@@ -54,9 +57,9 @@ hence you can trade some readability and use implicit instance creation provided
 Decorators
 ----------
 
-.. autodecorator:: disctools.commands.inject
+.. autofunction:: disctools.commands.inject
 
-.. autodecorator:: disctools.commands.inject_cmd
+.. autofunction:: disctools.commands.inject_cmd
 
 
 Differences
@@ -90,8 +93,8 @@ But decorating the class is recommended.
 
 Instance Checks
 ---------------
-All the Commands are a subclass of :class:`discord.ext.commands.Group`, hence to check if a command is a disctools command
-You may use `isinstance(cmd, disctools.Command)`
+All the Commands are a subclass of :class:`disctools.commands.Command`, hence to check if a command is a disctools command
+You may use ``isinstance(cmd, disctools.Command)``
 
 Parameters
 ----------
