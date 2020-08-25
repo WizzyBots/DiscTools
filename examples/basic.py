@@ -38,10 +38,10 @@ Bot = disctools.Bot("~")
 class test(disctools.CCmd):
     async def main(self, ctx):
         await ctx.send("PASS")
-    
+
     async def subcommand_before_invoke(self, ctx):
         await ctx.send("Test before hook PASS")
-    
+
     async def subcommand_after_invoke(self, ctx):
         await ctx.send("Test after hook PASS")
 

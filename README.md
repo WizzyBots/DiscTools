@@ -4,7 +4,7 @@ A discord.py helper library
 
 ### About
 
-DiscTools is a library built on top of discord.py to implement a different way(syntax) to develop commands, It also includes hellper classes and functions.
+DiscTools is a library built on top of discord.py to implement a different way(syntax) to develop commands, It also includes helper classes and functions.
 
 ### Contribution
 
