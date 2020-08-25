@@ -7,7 +7,7 @@ class BotTest(unittest.TestCase):
         self.bot = Bot("~")
         self.ABot = _AS("~")
         self.cmd = Command(name="test")
-    
+
     def test_inject_cmd(self):
         self.ABot.inject_cmd(self.cmd)
         self.bot.inject_cmd(self.cmd)

@@ -1,6 +1,10 @@
-## DiscTools
+## [DiscTools](https://github.com/TEEN-BOOM/DiscTools)
 
 A discord.py helper library
+
+### [Documentation](https://disctools.readthedocs.io)
+
+The documentation is available over (here)(https://disctools.readthedocs.io).
 
 ### About
 
