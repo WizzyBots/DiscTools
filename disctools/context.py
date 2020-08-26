@@ -1,4 +1,4 @@
-"""Custom context class for discord."""
+"""Job focused Context classes for discord.py"""
 
 # MIT License
 
@@ -22,25 +22,22 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import Sequence, Optional, Union
+from typing import Sequence, Optional, Union, Tuple
 
 import aiohttp
 import discord
 from discord.ext.commands import Context as _Context
 
-def _compare(value, expr, Iter: Sequence):
-    """Compare an Sequence with a single object to see if every element of Sequence satifies expression."""
-    for element in Iter:
-        if not expr(value, element):
-            return element
-        else:
-            pass
+def _maybe_sequence(doubtful) -> Sequence:
+    if not isinstance(doubtful, Sequence):
+        return [doubtful]
     else:
-        return True
-    
+        return doubtful
 
-class Context(_Context):
-    """The over-rided context class.
+class TargetContext(_Context):
+    """A Context class with utilities to determine Member hierarchy.
+
+    Helps in checks for moderation Commands.
     """
 
     def __init__(self, **kwargs):
@@ -57,54 +54,83 @@ class Context(_Context):
 
     @targets.setter
     def  targets(self, user: Union[discord.Member, Sequence[discord.Member]]) -> None:
-        if not isinstance(user, Sequence):
-            self._target = [user]
-        else:
-            self._target = user
+        self._target = _maybe_sequence(user)
 
-    def is_author_target(self, user: discord.Member = None) -> bool:
-        """Check if the target is the author
+    @property
+    def is_author_target(self) -> bool:
+        """bool : This property is equivalent to ``ctx.is_user_target()`` or ``ctx.is_user_target(ctx.author)``"""
+        return self.author in self.targets
+
+    def is_user_target(self, user: discord.Member) -> bool:
+        """Check if a user is a target
 
         Parameters
         ----------
-        user : Optional[:class:`discord.Member`]
-            The user to check, if None then ctx.author is used. By default None
+        user : :class:`discord.Member`
+            The user to verify as target
 
         Returns
         -------
         bool
-            True if the user is the author, else False
-        """
-        if user is None:
-            return self.author in self.targets
-
-        return self.author == user
-
-    def is_above(self, user: discord.Member = None) -> bool:
-        """Check if author is above  targets.
-
-        Parameters
-        ----------
-        user : Optional[:class:`discord.Member`]
-            The user to check if none, then first mentioned user is used, by default None
-
-        Returns
-        -------
-        bool
-            True if user above targets else False
+            True if the user is the target, else False
         """
         if user == self.author:
-            return False # REASON:: [1>1 is False]
-        if user is None:
-            user = self.targets[0]
-        if self.author == self.guild.owner:
-            return True
-        if user is not None:
-            x = lambda z, y: z > y.top_role
-            return _compare(self.author.top_role, x, user)
+            return self.is_author_target
+        return user in self.targets
 
+    def _above_check(self, user: discord.Member, users: Optional[Union[discord.Member, Sequence[discord.Member]]] = None) -> Tuple[bool, Union[discord.Member, None]]:
+        if user == self.guild.owner:
+            return True, None
+        if users is None:
+            users = self.targets
+        else:
+            users = _maybe_sequence(users)
 
-    async def whisper(self, user: Union[discord.Member, Sequence[discord.Member]] = None, *args, **kwargs) -> None:
+        if users is not None:
+            for member in users:
+                if member == self.guild.owner:
+                    return False, member
+                if member.top_role > user.top_role:
+                    return False, member
+                else:
+                    pass
+            else:
+                return True, None
+
+    def is_author_above(self, users: Optional[Union[discord.Member, Sequence[discord.Member]]] = None) -> Tuple[bool, Union[discord.Member, None]]:
+        """Check if author is above all given users
+
+        Parameters
+        ----------
+        users :  Optional[Union[:class:`discord.Member`, Sequence[:class:`discord.Member`]]]
+            The user(s) to check against, if none, then command's targets are used, by default None.
+
+        Returns
+        -------
+        Tuple[bool, Union[:clas:`discord.Member`, None]]
+            A tuple of length two. If author is above targets then first element will
+            be True and second element will be None. If author is not above target then
+            first element will be False and second element will be the first user who is above the author.
+            Example output: ``(True, None)``, ``(False, <discord.Member Object>).
+        """
+        return self._above_check(self.author, users)
+
+    def is_bot_above(self, users: Optional[Union[discord.Member, Sequence[discord.Member]]] = None) -> Tuple[bool, Union[discord.Member, None]]:
+        """Check if bot is above all given users, similar to :meth:`TargetContext.is_author_above`
+
+        Parameters
+        ----------
+        users :  Optional[Union[:class:`discord.Member`, Sequence[:class:`discord.Member`]]]
+            The user(s) to check against, if none, then command's targets are used, by default None.
+
+        Returns
+        -------
+        Tuple[bool, Union[:clas:`discord.Member`, None]]
+            Same as :meth:`TargetContext.is_author_above`. Only that the comparisn is with Bot.
+        """
+        return self._above_check(self.author, users)
+
+    async def whisper(self, user: Optional[Union[discord.Member, Sequence[discord.Member]]] = None, *args, **kwargs) -> None:
         """|coro|
         DM all targets of a command.
 
@@ -129,17 +155,12 @@ class Context(_Context):
             for target in user:
                 target.send(*args, **kwargs)
 
-    # async def send(self, content=None, **kwargs) -> discord.Message:
-    #     """Convert all messages outbound from the bot to Blurple Embed."""
-    #     if content is not None and kwargs.pop("embed", None) is None:
-    #         embed = embed = discord.Embed(description=content, colour=discord.Colour.blue())
-    #         return await super().send(embed=embed, **kwargs)
-    #     else:
-    #         return await super().send(content=content, **kwargs)
 
+class EmbedingContext(_Context):
+    """Introduces :meth:`send_embed` which helps reduce usage of :class:`discord.Embed`"""
     async def send_embed(self, *args, **kwargs) -> discord.Message:
         """|coro|
-        Send an embed
+        Send an embed.
 
         This is a shorthand to creating an :class:`discord.Embed` and sending it.
         All arguments are passed to :class:`discord.Embed`.
@@ -152,6 +173,20 @@ class Context(_Context):
         """        
         return await self.send(embed=discord.Embed(*args, **kwargs))
 
+    # async def send(self, content=None, **kwargs) -> discord.Message:
+    #     """Convert all messages outbound from the bot to Blue Embed."""
+    #     if content is not None and kwargs.pop("embed", None) is None:
+    #         embed = embed = discord.Embed(description=content, colour=discord.Colour.blue())
+    #         return await super().send(embed=embed, **kwargs)
+    #     else:
+    #         return await super().send(content=content, **kwargs)
+
+
+class WebHelperContext(_Context):
+    """Contains utilities for web requests method.
+
+    Helps in shortening code for web requests based commands,
+    Currently only has one method."""
     async def web_request(self, url: str) -> aiohttp.ClientResponse:
         """|coro|
         Make a http rquest with aiohttp

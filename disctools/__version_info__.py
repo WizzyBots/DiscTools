@@ -49,9 +49,9 @@ class VersionInfo:# Major.minor.patch status serial + build
 version_info = VersionInfo(
     major = 0,
     minor = 1,
-    patch = 1,
+    patch = 2,
     status = status_map["alpha"],
-    serial = 1
+    serial = 0
 )
 
 __version__ = str(version_info)

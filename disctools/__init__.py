@@ -2,7 +2,7 @@
 """
 from .commands import *
 from .abstractions import Cog
-from .context import Context
+from .context import TargetContext, WebHelperContext, EmbedingContext
 from .bot import Bot, AutoShardedBot
 
 from .__version_info__ import __version__, version_info

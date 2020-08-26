@@ -155,8 +155,9 @@ class Command(_Group):
         except AttributeError:
             self.cogcmd = None
 
-    def __ext_init__(self) -> None:
-        pass
+    # TODO:: Call this when either parent, cog, cogcmd is set. preferably without dunders
+    # def __ext_init__(self) -> None:
+    #     pass
 
     async def pre_invoke(self, *args, **kwargs):
         """|overridecoro|
@@ -382,7 +383,7 @@ class CCmd(Command, metaclass=CogCommandType):
             # -- Let errors be raised ; DESC:: [This handles all the stuff that is 
             self.add_command(i) #               usually done for an instance in a cog]
             i.cogcmd = self # This Will let subcommands access the CCmd to change the command behaviour
-            i.__ext_init__()
+            # i.__ext_init__()
 
     async def on_subcommand_error(self, ctx: discord.ext.commands.Context, error):
         """|overridecoro|
