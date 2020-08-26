@@ -107,11 +107,11 @@ class TargetContext(_Context):
 
         Returns
         -------
-        Tuple[bool, Union[:clas:`discord.Member`, None]]
+        Tuple[bool, Union[:class:`discord.Member`, None]]
             A tuple of length two. If author is above targets then first element will
             be True and second element will be None. If author is not above target then
             first element will be False and second element will be the first user who is above the author.
-            Example output: ``(True, None)``, ``(False, <discord.Member Object>).
+            Example output: ``(True, None)``, ``(False, <discord.Member Object>)``.
         """
         return self._above_check(self.author, users)
 
@@ -125,7 +125,7 @@ class TargetContext(_Context):
 
         Returns
         -------
-        Tuple[bool, Union[:clas:`discord.Member`, None]]
+        Tuple[bool, Union[:class:`discord.Member`, None]]
             Same as :meth:`TargetContext.is_author_above`. Only that the comparisn is with Bot.
         """
         return self._above_check(self.author, users)

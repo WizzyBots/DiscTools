@@ -51,7 +51,7 @@ version_info = VersionInfo(
     minor = 2,
     patch = 0,
     status = status_map["alpha"],
-    serial = 0
+    serial = 1
 )
 
 __version__ = str(version_info)
