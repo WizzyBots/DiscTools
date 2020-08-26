@@ -21,6 +21,7 @@ setup(
     install_requires=requirements,
     url="https://github.com/TEEN-BOOM/DiscTools",
     license='MIT',
+    test_suite="tests",
     packages=[
         "disctools",
         "disctools.experimental"

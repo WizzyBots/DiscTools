@@ -48,8 +48,8 @@ class VersionInfo:# Major.minor.patch status serial + build
 
 version_info = VersionInfo(
     major = 0,
-    minor = 1,
-    patch = 2,
+    minor = 2,
+    patch = 0,
     status = status_map["alpha"],
     serial = 0
 )
