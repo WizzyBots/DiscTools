@@ -26,6 +26,7 @@ from discord.ext.commands.core import wrap_callback
 from discord.ext.commands.errors import TooManyArguments
 
 from typing import Callable
+
 __all__ = (
     "CogCommandType",
     "CmdInitType",

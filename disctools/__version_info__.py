@@ -6,7 +6,7 @@ status_map = {
 }
 
 class last_modified:
-    day = 25
+    day = 26
     month = 8
     year = 2020
 
@@ -51,7 +51,7 @@ version_info = VersionInfo(
     minor = 1,
     patch = 1,
     status = status_map["alpha"],
-    serial = 0
+    serial = 1
 )
 
 __version__ = str(version_info)
@@ -78,4 +78,6 @@ Release: {platform.release()}
     )
 
 if __name__ == "__main__":
+    import pathlib
+    (pathlib.Path(__file__).parents[1] / "version.num").write_text(__version__)
     main()

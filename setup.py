@@ -1,12 +1,14 @@
 from setuptools import setup
-from disctools.__version_info__ import __version__ as version
 
 with open("README.md", "r") as ReadHead:
     long_description = ReadHead.read()
 
 requirements = []
-with open('requirements.txt') as f:
-  requirements = f.read().splitlines()
+with open("requirements.txt") as ReadHead:
+  requirements = ReadHead.read().splitlines()
+
+with open("version.num") as ReadHead:
+    version = ReadHead.read()
 
 setup(
     name="DiscTools",
