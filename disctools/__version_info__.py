@@ -2,7 +2,7 @@ status_map = {
     "alpha": "a",
     "beta": "b",
     "release_candidate": "rc",
-    "final": "final"
+    "final": "f"
 }
 
 class last_modified:
@@ -17,16 +17,7 @@ class last_modified:
 class VersionInfo:# Major.minor.patch status serial + build
     """Information regarding a version."""
     def __init__(self, *, major, minor, patch, status, serial = 0, build = None):
-        ver = f"{major}.{minor}.{patch}"
-
-        if not len(status) <= 2:
-            if status.lower() == "final":
-                pre_release = status
-            else:
-                pre_release = f"{status}.{serial}"
-            ver += f"-{pre_release}"
-        else:
-            ver += f"{status}{serial}"
+        ver = f"{major}.{minor}.{patch}{status}{serial}"
 
         if build:
             ver += f"+{build}"
