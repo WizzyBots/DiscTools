@@ -17,7 +17,10 @@ class last_modified:
 class VersionInfo:# Major.minor.patch status serial + build
     """Information regarding a version."""
     def __init__(self, *, major, minor, patch, status, serial = 0, build = None):
-        ver = f"{major}.{minor}.{patch}{status}{serial}"
+        ver = f"{major}.{minor}.{patch}"
+        
+        if status != "f":
+            ver += f"{status}{serial}"
 
         if build:
             ver += f"+{build}"
