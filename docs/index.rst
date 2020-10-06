@@ -28,7 +28,7 @@ A basic Bot using DiscTools
     )
     Bot = disctools.Bot("~")
 
-    @Bot.inject(name="Test", invoke_without_subcommand=False)
+    @Bot.inject(name="Test", invoke_without_command=False)
     class test(disctools.CCmd):
         async def main(self, ctx):
             await ctx.send("PASS")
