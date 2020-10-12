@@ -63,7 +63,8 @@ A basic Bot using DiscTools
                 This is not enforced but recommended, so that it ts easier to migrate from discord's platform"""
                 return msg
 
-        # You may do this but, without disctools.Command or else you lose the self argument.
+        # You can use @commands.command() in a cogcmd, if disctools.Command is used as the cls argument.
+        # Without disctools.Command, the method starts acting like a staticmethod.
         @commands.command(cls=disctools.Command, name="Third")
         async def third(self, ctx, *, msg: str = "PASSS"):
             return await ctx.send(msg)
