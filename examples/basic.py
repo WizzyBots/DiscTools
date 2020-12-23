@@ -69,7 +69,7 @@ class test(disctools.CCmd):
             This is not enforced but recommended, so that it ts easier to migrate from discord's platform"""
             return msg
 
-    # You may do this but, without disctools.Command or else you lose the self argument.
+    # You may do this but, without disctools.Command you lose the self argument.
     @commands.command(cls=disctools.Command, name="Third")
     async def third(self, ctx, *, msg: str = "PASSS"):
         return await ctx.send(msg)
