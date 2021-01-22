@@ -1,5 +1,4 @@
 from setuptools import setup
-import pathlib
 
 with open("README.md", "r") as ReadHead:
     long_description = ReadHead.read()
