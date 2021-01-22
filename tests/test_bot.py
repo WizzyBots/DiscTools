@@ -1,8 +1,10 @@
 import unittest
 
-from disctools import Bot, AutoShardedBot as _AS, Command
+from disctools import AutoShardedBot as _AS
+from disctools import Bot, Command
 
 from utils import dummy
+
 
 class BotTest(unittest.TestCase):
     def setUp(self):

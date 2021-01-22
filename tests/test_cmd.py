@@ -1,7 +1,10 @@
 import unittest
-from disctools import Command, CCmd, ICCmd, ICommand, inject, inject_cmd
+
+from disctools import CCmd, Command, ICCmd, ICommand, inject, inject_cmd
 
 from utils import dummy as _dummy
+
+
 class CMDTest(unittest.TestCase):
     def test_inject(self):
         class dummy:

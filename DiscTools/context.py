@@ -22,11 +22,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import Sequence, Optional, Union, Tuple
+from typing import Optional, Sequence, Tuple, Union
 
 import aiohttp
 import discord
 from discord.ext.commands import Context as _Context
+
 
 def _maybe_sequence(doubtful) -> Sequence:
     if not isinstance(doubtful, Sequence):
@@ -45,7 +46,7 @@ class TargetContext(_Context):
         super().__init__(**kwargs)
         self._target = None
         self.targets = self.message.mentions
-    
+
     @property
     def targets(self):
         """Sequence[:class:`discord.Member`] : A sequence of Members that were mentioned, this shall be set on invoke.
@@ -78,6 +79,7 @@ class TargetContext(_Context):
             return self.is_author_target
         return user in self.targets
 
+
     def _above_check(self, user: discord.Member, users: Optional[Union[discord.Member, Sequence[discord.Member]]] = None) -> Tuple[bool, Union[discord.Member, None]]:
         if user == self.guild.owner:
             return True, None
@@ -86,16 +88,15 @@ class TargetContext(_Context):
         else:
             users = _maybe_sequence(users)
 
-        if users is not None:
-            for member in users:
-                if member == self.guild.owner:
-                    return False, member
-                if member.top_role > user.top_role:
-                    return False, member
-                else:
-                    pass
+        for member in users:
+            if member == self.guild.owner:
+                return False, member
+            if member.top_role > user.top_role:
+                return False, member
             else:
-                return True, None
+                pass
+        else:
+            return True, None
 
     def is_author_above(self, users: Optional[Union[discord.Member, Sequence[discord.Member]]] = None) -> Tuple[bool, Union[discord.Member, None]]:
         """Check if author is above all given users
@@ -146,7 +147,7 @@ class TargetContext(_Context):
         Returns
         -------
             NoneType
-        """                      
+        """
         if user is None:
             user = self.targets
         if not isinstance(user, Sequence):
@@ -170,7 +171,7 @@ class EmbedingContext(_Context):
         -------
         :class:`discord.Message`
             The message that was sent.
-        """        
+        """
         return await self.send(embed=discord.Embed(*args, **kwargs))
 
     # async def send(self, content=None, **kwargs) -> discord.Message:
@@ -200,7 +201,7 @@ class WebHelperContext(_Context):
         -------
         :class:`aiohttp.ClientResponse`
             The requests response
-        """        
+        """
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
                 return r

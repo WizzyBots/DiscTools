@@ -1,6 +1,8 @@
 import unittest
-from disctools import TargetContext as TestCtx
 from typing import List
+
+from disctools import TargetContext as TestCtx
+
 
 class MockUser:
     def __init__(self, top_role: int):

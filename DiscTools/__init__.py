@@ -1,10 +1,9 @@
 """A package containing all stable DisHelpers
 """
-from .commands import *
-from .abstractions import Cog
-from .context import TargetContext, WebHelperContext, EmbedingContext
-from .bot import Bot, AutoShardedBot
-
 from .__version_info__ import __version__, version_info
+from .abstractions import Cog
+from .bot import AutoShardedBot, Bot
+from .commands import *
+from .context import EmbedingContext, TargetContext, WebHelperContext
 
 __author__ = "TEEN-BOOM"

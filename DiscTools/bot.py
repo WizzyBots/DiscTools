@@ -20,8 +20,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from discord.ext.commands import AutoShardedBot as _AS
+from discord.ext.commands import Bot as _Bot
+from discord.ext.commands import GroupMixin as _GM
 from discord.ext.commands.bot import BotBase as _Base
-from discord.ext.commands import Bot as _Bot, AutoShardedBot as _AS, GroupMixin as _GM
+
 
 class InjectableBotMixin(_GM):
     def inject(self, **kwargs):

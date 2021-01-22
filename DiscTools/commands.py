@@ -21,12 +21,14 @@
 # SOFTWARE.
 
 from asyncio.coroutines import iscoroutinefunction
+from typing import Callable
+
 import discord
-from discord.ext.commands import Cog, command, Group as _Group, Command as _Command
+from discord.ext.commands import Cog
+from discord.ext.commands import Command as _Command
+from discord.ext.commands import Group as _Group
 from discord.ext.commands.core import wrap_callback
 from discord.ext.commands.errors import TooManyArguments
-
-from typing import Callable
 
 __all__ = (
     "CogCommandType",
