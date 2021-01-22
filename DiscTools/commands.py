@@ -119,15 +119,15 @@ class Command(_Group):
     Special Methods
     ---------------
     This class has four special methods.
-        1. `main`
-        2. `pre_invoke`
-        3. `post_invoke`
-        4. `on_error`
+        1. ``main``
+        2. ``pre_invoke``
+        3. ``post_invoke``
+        4. ``on_error``
 
     Each of these methods is expected to be a coroutine.
-    These methods have their parent as the second argument after `self`.
-    for example, if a command is a part of a cog or cog-cmd then the argument of the special methods becomes `(self, CogOrCogCMD, ctx, *args, **kwargs)`,
-    if a command is directly added to a bot then the argument becomes `(self, ctx, *args, **kwargs)`
+    These methods have their parent as the second argument after ``self``.
+    for example, if a command is a part of a cog or cog-cmd then the argument of the special methods becomes ``(self, CogOrCogCMD, ctx, *args, **kwargs)``,
+    if a command is directly added to a bot then the argument becomes ``(self, ctx, *args, **kwargs)``
 
     Example
     -------
