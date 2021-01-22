@@ -1,4 +1,5 @@
 from setuptools import setup
+import pathlib
 
 with open("README.md", "r") as ReadHead:
     long_description = ReadHead.read()
@@ -40,6 +41,5 @@ setup(
             "Sphinx~=3.1.2",
             "sphinx-rtd-theme~=0.5.0"
         ]
-    },
-    package_dir={"": "."}
+    }
 )
