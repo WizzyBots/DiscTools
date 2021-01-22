@@ -20,8 +20,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from discord.ext.commands import Cog as _Cog, Bot as _Bot, AutoShardedBot as _ABot
 from typing import Union
+
+from discord.ext.commands import AutoShardedBot as _ABot
+from discord.ext.commands import Bot as _Bot
+from discord.ext.commands import Cog as _Cog
+
 
 # Saves me a few characters
 class Cog(_Cog):
@@ -36,7 +40,3 @@ class Cog(_Cog):
     """
     def __init__(self, bot: Union[_Bot, _ABot]):
         self.bot = bot
-
-# class _(str):
-#     """A string subclass for future i18n"""
-#     pass
