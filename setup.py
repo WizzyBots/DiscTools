@@ -40,5 +40,6 @@ setup(
             "Sphinx~=3.1.2",
             "sphinx-rtd-theme~=0.5.0"
         ]
-    }
+    },
+    package_dir={"": "."}
 )
