@@ -51,7 +51,7 @@ class test(disctools.CCmd):
         async def pre_invoke(self, parent, ctx):
             return await ctx.send("Preparing...")
 
-        async def main(self, parent, ctx, *, msg: str = "PASSS"):
+        async def main(self, parent, ctx, *, msg: str = "PASS"):
             return await ctx.send(msg)
 
         async def post_invoke(self, parent, ctx):
@@ -59,19 +59,20 @@ class test(disctools.CCmd):
 
     class Second(disctools.ICommand, aliases=["s"]):
         # Usage: `[p]Test [Second|s] Hi!`
-        async def main(self, parent, ctx, *, msg: str = "PASSS"):
-            """Interact with discord here, you may write everthing here."""
-            return await ctx.send(msg)
+        async def main(self, parent, ctx, *, msg: str = "PASS"):
+            """Interact with discord here, you may write everything here."""
+            return await ctx.send(self.logic(msg))
 
         async def logic(self, msg):
             """Platform agnostic implementation of the command
 
-            This is not enforced but recommended, so that it ts easier to migrate from discord's platform"""
+            This is not enforced but recommended; it's easier to migrate from discord
+            if the need arises in future"""
             return msg
 
     # You may do this but, without disctools.Command you lose the self argument.
     @commands.command(cls=disctools.Command, name="Third")
-    async def third(self, ctx, *, msg: str = "PASSS"):
+    async def third(self, ctx, *, msg: str = "PASS"):
         return await ctx.send(msg)
 
 Bot.run("<TOKEN>")

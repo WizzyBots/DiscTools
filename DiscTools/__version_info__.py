@@ -6,46 +6,63 @@ status_map = {
 }
 
 class last_modified:
-    day = 26
-    month = 8
-    year = 2020
+    day = 19
+    month = 1
+    year = 2021
 
     @classmethod
     def date(cls):
-        return f"{year}.{month}.{day}"
+        return f"{cls.year}.{cls.month}.{cls.day}"
 
-class VersionInfo:# Major.minor.patch status serial + build
+
+# Major.minor.patch status serial .postN .devM + build
+class VersionInfo:
     """Information regarding a version."""
-    def __init__(self, *, major, minor, patch, status, serial = 0, build = None):
-        ver = f"{major}.{minor}.{patch}"
-        
+    def __init__(self, *, major, minor, patch, status, serial = 0, post = 0, dev = 0, build = None):
+        ver = str(major)
+        if minor:
+            ver += f".{minor}"
+
+        if patch:
+            if not minor:
+                ver += f".0.{patch}"
+            else:
+                ver += f".{patch}"
+
         if status != "f":
             ver += f"{status}{serial}"
+
+        if post:
+            ver += f".post{post}"
+
+        if dev:
+            ver += f".dev{dev}"
 
         if build:
             ver += f"+{build}"
 
-        self._semver = ver
+        self._ver = ver
         self.major = major
         self.minor = minor
         self.patch = patch
         self.status = status
         self.serial = serial
+        self.post = post
+        self.dev = dev
         self.build = build
-        self.__cached_repr = f"<VersionInfo of '{self._semver}'>"
-    
+        self.__cached_repr = f"<VersionInfo of '{self._ver}'>"
+
     def __str__(self) -> str:
-        return self._semver
+        return self._ver
 
     def __repr__(self) -> str:
         return self.__cached_repr
 
 version_info = VersionInfo(
     major = 0,
-    minor = 2,
+    minor = 3,
     patch = 0,
     status = status_map["final"],
-    serial = 0
 )
 
 __version__ = str(version_info)
@@ -63,7 +80,7 @@ Python Info
 Version: {platform.python_version()}
 Implementation: {platform.python_implementation()}
 
-Hardware Info
+Platform Info
 =============
 System: {platform.system()}
 Machine: {platform.machine()}

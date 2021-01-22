@@ -27,11 +27,11 @@ Pre-Injected Commands
 Abstract
 ********
 These classes use meta classes to avoid using the :func:`disctools.commands.inject`
-In short: "These classes return an instance on defination"
+In short: "These classes return an instance on definition"
 
 Why use these?
 **************
-If you write many commands then then :func:`disctools.commands.inject` may become repitive
+If you write many commands then then :func:`disctools.commands.inject` may become repetitive
 hence you can trade some readability and use implicit instance creation provided by these classes.
 
 .. note::
@@ -39,8 +39,8 @@ hence you can trade some readability and use implicit instance creation provided
     But if any [decorators] must be used then expect an instance instead of a class.
 
 .. warning::
-    Since these classes initialise on defination, they may cause errors when inheriting from them 
-    hence you may instead create a new class and set the metaclass as a  :class:`disctools.commands.CmdInitType` or  :class:`disctools.commands.CogCmdInitType` 
+    Since these classes initialize on definition, they may cause errors when inheriting from them
+    hence you may instead create a new class and set the metaclass as a  :class:`disctools.commands.CmdInitType` or  :class:`disctools.commands.CogCmdInitType`
     and set the variable as the `__class__` attribute of the instance.
 
     .. code-block:: py
@@ -98,11 +98,11 @@ You may use ``isinstance(cmd, disctools.Command)``
 
 Parameters
 ----------
-The parameters passed to a disctools Command sligthly differ from :class:`discord.ext.commands.Command`
+The parameters passed to a disctools Command slightly differ from :class:`discord.ext.commands.Command`
 To understand the difference we first need to define two terms regarding commands.
- 
+
 Signature
-    The signature or parameters of a function are determined by the `main` method. it ignores 
+    The signature or parameters of a function are determined by the `main` method. it ignores
 
 Parent
     Every command in a :class:`discord.ext.commands.Cog` or a CogCmd (aka :class:`disctools.CCmd` & :class:`disctools.ICCmd`) has access to the Cog or CogCmd.
@@ -118,10 +118,10 @@ Parent
                     assert isinstance(ctx, commands.Context)
                     await ctx.send(firstArg)
 
-    This is true for the `main` method and other methds such as:
+    This is true for the `main` method and other methods such as:
         * :meth:`disctools.commands.Command.on_error`
         * :meth:`disctools.commands.Command.pre_invoke`
-        * :meth:`disctools.commands.Command.post_invoke` 
+        * :meth:`disctools.commands.Command.post_invoke`
 
 Hence every DiscTools command will be passed a `parent` argument between `ctx` & `self`, if it (the Command) has a `parent`
 

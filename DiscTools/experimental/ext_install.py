@@ -22,4 +22,4 @@ class Installer:
         This creates a subprocess.Popen Object, which is appended to bot.alive_popen
         to be later(on exit) on cleaned up using `Popen.wait <https://docs.python.org/3/library/subprocess.html#subprocess.Popen.wait/>`_ or any other method.
         """
-        bot.alive_popen.append(subprocess.Popen([sys.executable, "-m", "pip", "install", package, "-t", self.Dir, "-U"]))
+        self.bot.alive_popen.append(subprocess.Popen([sys.executable, "-m", "pip", "install", package, "-t", self.Dir, "-U"]))

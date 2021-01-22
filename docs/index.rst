@@ -28,14 +28,14 @@ A basic Bot using DiscTools
     )
     Bot = disctools.Bot("~")
 
-    @Bot.inject(name="Test", invoke_without_command=False)
+    @Bot.inject(name="Test", invoke_without_subcommand=False)
     class test(disctools.CCmd):
         async def main(self, ctx):
             await ctx.send("PASS")
-        
+
         async def subcommand_before_invoke(self, ctx):
             await ctx.send("Test before hook PASS")
-        
+
         async def subcommand_after_invoke(self, ctx):
             await ctx.send("Test after hook PASS")
 
@@ -45,7 +45,7 @@ A basic Bot using DiscTools
             async def pre_invoke(self, parent, ctx):
                 return await ctx.send("Preparing...")
 
-            async def main(self, parent, ctx, *, msg: str = "PASSS"):
+            async def main(self, parent, ctx, *, msg: str = "PASS"):
                 return await ctx.send(msg)
 
             async def post_invoke(self, parent, ctx):
@@ -53,23 +53,24 @@ A basic Bot using DiscTools
 
         class Second(disctools.ICommand, aliases=["s"]):
             # Usage: `[p]Test [Second|s] Hi!`
-            async def main(self, parent, ctx, *, msg: str = "PASSS"):
-                """Interact with discord here, you may write everthing here."""
-                return await ctx.send(msg)
+            async def main(self, parent, ctx, *, msg: str = "PASS"):
+                """Interact with discord here, you may write everything here."""
+                return await ctx.send(self.logic(msg))
 
             async def logic(self, msg):
                 """Platform agnostic implementation of the command
 
-                This is not enforced but recommended, so that it ts easier to migrate from discord's platform"""
+                This is not enforced but recommended; it's easier to migrate from discord
+                if the need arises in future"""
                 return msg
 
-        # You can use @commands.command() in a cogcmd, if disctools.Command is used as the cls argument.
-        # Without disctools.Command, the method starts acting like a staticmethod.
+        # You may do this but, without disctools.Command you lose the self argument.
         @commands.command(cls=disctools.Command, name="Third")
-        async def third(self, ctx, *, msg: str = "PASSS"):
+        async def third(self, ctx, *, msg: str = "PASS"):
             return await ctx.send(msg)
 
     Bot.run("<TOKEN>")
+
 
 
 .. toctree::

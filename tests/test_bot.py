@@ -2,11 +2,13 @@ import unittest
 
 from disctools import Bot, AutoShardedBot as _AS, Command
 
+from utils import dummy
+
 class BotTest(unittest.TestCase):
     def setUp(self):
         self.bot = Bot("~")
         self.ABot = _AS("~")
-        self.cmd = Command(name="test")
+        self.cmd = Command(func=dummy, name="test")
 
     def test_inject_cmd(self):
         self.ABot.inject_cmd(self.cmd)
@@ -16,7 +18,7 @@ class BotTest(unittest.TestCase):
 
     def test_inject(self):
         class TestCMD(Command):
-            pass
+            main = dummy
 
         AInst = self.ABot.inject(name="test2")(TestCMD)
         inst = self.bot.inject(name="test2")(TestCMD)

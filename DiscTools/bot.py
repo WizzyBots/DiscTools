@@ -36,7 +36,7 @@ class InjectableBotMixin(_GM):
             return result
 
         return decorator
-    
+
     def inject_cmd(self, inst) -> None:
         """Inject a command instance into the Bot.
 
