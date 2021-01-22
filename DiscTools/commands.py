@@ -123,6 +123,7 @@ class Command(_Group):
         2. `pre_invoke`
         3. `post_invoke`
         4. `on_error`
+
     Each of these methods is expected to be a coroutine.
     These methods have their parent as the second argument after `self`.
     for example, if a command is a part of a cog or cog-cmd then the argument of the special methods becomes `(self, CogOrCogCMD, ctx, *args, **kwargs)`,
