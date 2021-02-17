@@ -2,7 +2,7 @@
 
 CLI
 ---
-`--local`, `-l`
+`--local`
     Test the local disctools package instead of the installed package
 """
 from unittest import main
