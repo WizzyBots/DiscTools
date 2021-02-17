@@ -1,7 +1,6 @@
-from os.path import abspath, dirname
+from os.path import abspath
 from sys import argv
 from sys import path as spath
-from test.support import load_package_tests
 
 try:
     import disctools

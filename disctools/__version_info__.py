@@ -61,7 +61,7 @@ class VersionInfo:
 version_info = VersionInfo(
     major = 0,
     minor = 3,
-    patch = 2,
+    patch = 3,
     status = status_map["final"],
 )
 

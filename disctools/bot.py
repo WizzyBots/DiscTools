@@ -23,8 +23,6 @@
 from discord.ext.commands import AutoShardedBot as _AS
 from discord.ext.commands import Bot as _Bot
 from discord.ext.commands import GroupMixin as _GM
-from discord.ext.commands.bot import BotBase as _Base
-
 
 class InjectableBotMixin(_GM):
     def inject(self, **kwargs):
