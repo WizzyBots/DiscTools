@@ -69,27 +69,16 @@ class CogCommandType(type):
 
 class CmdInitType(type):
     """Initializes a Command during definition"""
-    def __new__(cls, NamE, BaseS, AttrS, **kwargs) -> object: # type: ignore
+    def __new__(cls, name, bases, attrs, **kwargs) -> object: # type: ignore
         meta_args = ()
-        if '__init_args__' in AttrS:
-            meta_args = AttrS['__init_args__']
-            del AttrS['__init_args__']
-        clas = super().__new__(cls, NamE, BaseS, AttrS)
-        inst = clas(*meta_args, **kwargs)
-        return inst
+        if '__init_args__' in attrs:
+            meta_args = attrs['__init_args__']
+            del attrs['__init_args__']
+        return super().__new__(cls, name, bases, attrs)(*meta_args, **kwargs)
 
-# Metaclass of a metaclass or a function changing
-# the super class is extremely complicated hence this.
-class CogCmdInitType(CogCommandType):
+class CogCmdInitType(CmdInitType, CogCommandType):
     """Initializes a Cog like Cmd during definition"""
-    def __new__(cls, NamE, BaseS, AttrS, **kwargs) -> object: # type: ignore
-        meta_args = ()
-        if '__init_args__' in AttrS:
-            meta_args = AttrS['__init_args__']
-            del AttrS['__init_args__']
-        clas = super().__new__(cls, NamE, BaseS, AttrS)
-        inst = clas(*meta_args, **kwargs)
-        return inst
+    pass
 
 
 ## Commands ##

@@ -1,11 +1,13 @@
-import unittest
+"""Disctool tests
 
-def test_suite():
-    return unittest.TestLoader().loadTestsFromNames(["test_bot", "test_cmd", "test_context"])
+CLI
+---
+`--local`, `-l`
+    Test the local disctools package instead of the installed package
+"""
+from unittest import main
+
+from . import load_tests
 
 if __name__ == "__main__":
-    # Running this file as main tests local code not the installed code
-    import sys
-    import os
-    sys.path.insert(0, os.path.abspath("."))
-    unittest.main(defaultTest='test_suite')
+    main()

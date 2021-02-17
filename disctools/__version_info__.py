@@ -6,8 +6,8 @@ status_map = {
 }
 
 class last_modified:
-    day = 19
-    month = 1
+    day = 17
+    month = 2
     year = 2021
 
     @classmethod
@@ -61,7 +61,7 @@ class VersionInfo:
 version_info = VersionInfo(
     major = 0,
     minor = 3,
-    patch = 1,
+    patch = 2,
     status = status_map["final"],
 )
 

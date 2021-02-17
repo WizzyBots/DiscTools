@@ -3,7 +3,7 @@ import unittest
 from disctools import AutoShardedBot as _AS
 from disctools import Bot, Command
 
-from utils import dummy
+from .utils import dummy
 
 
 class BotTest(unittest.TestCase):

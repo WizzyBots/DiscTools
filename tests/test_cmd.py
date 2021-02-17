@@ -2,7 +2,7 @@ import unittest
 
 from disctools import CCmd, Command, ICCmd, ICommand, inject, inject_cmd
 
-from utils import dummy as _dummy
+from .utils import dummy as _dummy
 
 
 class CMDTest(unittest.TestCase):
