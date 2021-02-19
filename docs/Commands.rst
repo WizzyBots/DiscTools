@@ -31,7 +31,7 @@ In short: "These classes return an instance on definition"
 
 Why use these?
 **************
-If you write many commands then then :func:`disctools.commands.inject` may become repetitive
+If you write many commands then :func:`disctools.commands.inject` may become repetitive
 hence you can trade some readability and use implicit instance creation provided by these classes.
 
 .. note::
