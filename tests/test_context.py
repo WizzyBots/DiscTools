@@ -3,7 +3,6 @@ from typing import List
 
 from disctools import TargetContext as TestCtx
 
-
 class MockUser:
     def __init__(self, top_role: int):
         self.top_role = top_role
@@ -23,7 +22,7 @@ class MockMessage:
         self.guild = guild
         self._state = None
 
-class CMDTest(unittest.TestCase):
+class ContextTest(unittest.TestCase):
     def setUp(self):
         self.User7 = MockUser(7) # Mentioned 1, Admin above owner (A)(U7)
         self.User4 = MockUser(4) # Mentioned 2 (T)(U4)
@@ -32,7 +31,7 @@ class CMDTest(unittest.TestCase):
         self.Guild6 = MockGuild(self.User6)
         self.Message65 = MockMessage(self.User6, [self.User5], self.Guild6) # Ban, Kick etc. by owner
         self.Message56 = MockMessage(self.User5, [self.User6], self.Guild6) # Moderator trying to kick, ban Owner
-        self.Message44 = MockMessage(self.User4, [self.User7, self.User4], self.Guild6) # trainee mod targeting admin and mentioning self 
+        self.Message44 = MockMessage(self.User4, [self.User7, self.User4], self.Guild6) # trainee mod targeting admin and mentioning self
         self.Message76 = MockMessage(self.User7, [self.User6], self.Guild6) # Admin kicking owner
         self.Message67 = MockMessage(self.User6, [self.User7], self.Guild6) # Owner kicking Admin
         self.Context1 = TestCtx(message=self.Message65, prefix="a") # Case 1
@@ -40,7 +39,7 @@ class CMDTest(unittest.TestCase):
         self.Context3 = TestCtx(message=self.Message44, prefix="a")
         self.Context4 = TestCtx(message=self.Message76, prefix="a")
         self.Context5 = TestCtx(message=self.Message67, prefix="a")
-    
+
     def test_above(self):
         self.assertTrue(self.Context1.is_author_above()[0]) # U6(O) > U5
         self.assertFalse(self.Context2.is_author_above()[0])

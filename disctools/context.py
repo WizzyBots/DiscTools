@@ -11,7 +11,7 @@
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
 
-# The above copyright notice and this permission notice shall be included in all
+# The above copyright notice and this permission notice shall be included in all 
 # copies or substantial portions of the Software.
 
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -35,52 +35,62 @@ def _maybe_sequence(doubtful) -> Sequence:
     else:
         return doubtful
 
+Targets = Union[discord.User, Sequence[discord.User]]
+MemberTargets = Union[discord.Member, Sequence[discord.Member]]
+
 class TargetContext(_Context):
     """A Context class with utilities to determine Member hierarchy.
 
     Helps in checks for moderation Commands.
+
+    Note
+    ====
+    The functions of this class can only be used when the message of the context belongs to a guild
     """
+    _target: Sequence[discord.User]
 
     def __init__(self, **kwargs):
-        """Salt and peppa."""
         super().__init__(**kwargs)
         self._target = None
         self.targets = self.message.mentions
 
     @property
     def targets(self):
-        """Sequence[:class:`discord.Member`] : A sequence of Members that were mentioned, this shall be set on invoke.
-        By default it is set to a list of mentions in the message"""
+        """Sequence[:class:`discord.User`] : A sequence of Users that were mentioned, this should be set on invoke.
+        By default it is set to a list of mentioned users in the message"""
         return self._target
 
     @targets.setter
-    def  targets(self, user: Union[discord.Member, Sequence[discord.Member]]) -> None:
+    def targets(self, user: Targets) -> None:
         self._target = _maybe_sequence(user)
 
     @property
     def is_author_target(self) -> bool:
-        """bool : This property is equivalent to ``ctx.is_user_target()`` or ``ctx.is_user_target(ctx.author)``"""
+        """:class:`bool`: This property is equivalent to ``ctx.is_user_target(ctx.author)``"""
         return self.author in self.targets
 
-    def is_user_target(self, user: discord.Member) -> bool:
+    def is_user_target(self, user: discord.User) -> bool:
         """Check if a user is a target
 
         Parameters
         ----------
-        user : :class:`discord.Member`
+        user : :class:`discord.User`
             The user to verify as target
 
         Returns
         -------
-        bool
+        :class:`bool`
             True if the user is the target, else False
         """
-        if user == self.author:
-            return self.is_author_target
         return user in self.targets
 
 
-    def _above_check(self, user: discord.Member, users: Optional[Union[discord.Member, Sequence[discord.Member]]] = None) -> Tuple[bool, Union[discord.Member, None]]:
+    def _above_check(self, user: discord.Member,
+                     users: Optional[MemberTargets] = None
+                     ) -> Tuple[bool, Optional[discord.Member]]:
+        if self.guild is None:
+            raise ValueError(f"Expected discord.Guild instance at {self.__class__.__qualname__}.guild instead got None")
+
         if user == self.guild.owner:
             return True, None
         if users is None:
@@ -89,26 +99,38 @@ class TargetContext(_Context):
             users = _maybe_sequence(users)
 
         for member in users:
-            if member == self.guild.owner:
-                return False, member
-            if member.top_role > user.top_role:
-                return False, member
-            else:
-                pass
+            try:
+                if member == self.guild.owner:
+                    return False, member
+                if member.top_role > user.top_role:
+                    return False, member
+                else:
+                    pass
+            except AttributeError as exc:
+                raise TypeError(f"Expected all users to be of type discord.Member instead encountered {type(member)}") from exc
         else:
             return True, None
 
-    def is_author_above(self, users: Optional[Union[discord.Member, Sequence[discord.Member]]] = None) -> Tuple[bool, Union[discord.Member, None]]:
+    def is_author_above(self,
+                        users: Optional[MemberTargets] = None
+                        ) -> Tuple[bool, Optional[discord.Member]]:
         """Check if author is above all given users
 
         Parameters
         ----------
         users :  Optional[Union[:class:`discord.Member`, Sequence[:class:`discord.Member`]]]
-            The user(s) to check against, if none, then command's targets are used, by default None.
+            The member(s) to check against, if None, then command's targets are used, by default None.
+
+        Raises
+        ------
+        :exc:`TypeError`
+            users argument is not of specified type.
+        :exc:`ValueError`
+            guild attribute is None.
 
         Returns
         -------
-        Tuple[bool, Union[:class:`discord.Member`, None]]
+        Tuple[:class:`bool`, Optional[:class:`discord.Member`]]
             A tuple of length two. If author is above targets then first element will
             be True and second element will be None. If author is not above target then
             first element will be False and second element will be the first user who is above the author.
@@ -116,29 +138,39 @@ class TargetContext(_Context):
         """
         return self._above_check(self.author, users)
 
-    def is_bot_above(self, users: Optional[Union[discord.Member, Sequence[discord.Member]]] = None) -> Tuple[bool, Union[discord.Member, None]]:
+    def is_bot_above(self,
+                     users: Optional[MemberTargets] = None
+                     ) -> Tuple[bool, Optional[discord.Member]]:
         """Check if bot is above all given users, similar to :meth:`TargetContext.is_author_above`
 
         Parameters
         ----------
         users :  Optional[Union[:class:`discord.Member`, Sequence[:class:`discord.Member`]]]
-            The user(s) to check against, if none, then command's targets are used, by default None.
+            The member(s) to check against, if None, then command's targets are used, by default None.
+
+        Raises
+        ------
+        :exc:`TypeError`
+            users argument is not of specified type.
+        :exc:`ValueError`
+            guild attribute is None.
 
         Returns
         -------
-        Tuple[bool, Union[:class:`discord.Member`, None]]
+        Tuple[:class:`bool`, Optional[:class:`discord.Member`]]
             Same as :meth:`TargetContext.is_author_above`. Only that the comparisn is with Bot.
         """
-        return self._above_check(self.author, users)
+        return self._above_check(self.me, users)
 
-    async def whisper(self, user: Optional[Union[discord.Member, Sequence[discord.Member]]] = None, *args, **kwargs) -> None:
+    async def whisper(self, user: Optional[Targets] = None,
+                      *args, **kwargs) -> None:
         """|coro|
         DM all targets of a command.
 
         Parameters
         ----------
-        user : Optional(Union[:class:`discord.Member`, List[discord.Member]])
-            The member(s) to DM. Defaults to self.targets.
+        user : Optional(Union[:class:`discord.User`, List[:class:`discord.User`]])
+            The user(s) to DM. Defaults to self.targets.
         args
             The positional arguments that should be used to message the targets.
         kwargs
@@ -174,34 +206,3 @@ class EmbedingContext(_Context):
         """
         return await self.send(embed=discord.Embed(*args, **kwargs))
 
-    # async def send(self, content=None, **kwargs) -> discord.Message:
-    #     """Convert all messages outbound from the bot to Blue Embed."""
-    #     if content is not None and kwargs.pop("embed", None) is None:
-    #         embed = embed = discord.Embed(description=content, colour=discord.Colour.blue())
-    #         return await super().send(embed=embed, **kwargs)
-    #     else:
-    #         return await super().send(content=content, **kwargs)
-
-
-class WebHelperContext(_Context):
-    """Contains utilities for web requests method.
-
-    Helps in shortening code for web requests based commands,
-    Currently only has one method."""
-    async def web_request(self, url: str) -> aiohttp.ClientResponse:
-        """|coro|
-        Make a http rquest with aiohttp
-
-        Parameters
-        ----------
-        url : str
-            The url to send the http request
-
-        Returns
-        -------
-        :class:`aiohttp.ClientResponse`
-            The requests response
-        """
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as r:
-                return r

@@ -5,6 +5,3 @@ Context
 
 .. autoclass:: disctools.context.EmbedingContext
     :members:
-
-.. autoclass:: disctools.context.WebHelperContext
-    :members:
