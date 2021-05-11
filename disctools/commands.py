@@ -1,6 +1,6 @@
 # MIT License
 
-# Copyright (c) 2020 TEEN-BOOM
+# Copyright (c) 2020-present WizzyGeek
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -178,7 +178,6 @@ class Command(_Command):
 
     def __init_subclass__(cls, **kwargs) -> None:
         if kwargs.get("_root", False):
-            print(cls)
             strip_doc = {"pre_invoke", "main", "post_invoke", "on_error"}
             for i in strip_doc:
                 i_func = getattr(cls, i, None)
