@@ -19,9 +19,11 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from __future__ import annotations
 
 from asyncio.coroutines import iscoroutinefunction
-from typing import Callable
+from typing import Callable, Union, TYPE_CHECKING
+from inspect import isawaitable, ismethod
 
 import discord
 from discord.ext.commands import Cog
@@ -29,6 +31,9 @@ from discord.ext.commands import Command as _Command
 from discord.ext.commands import Group as _Group
 from discord.ext.commands.core import wrap_callback
 from discord.ext.commands.errors import TooManyArguments
+
+if TYPE_CHECKING:
+    from discord.ext.commands.core import GroupMixin
 
 __all__ = (
     "CogCommandType",
@@ -42,8 +47,11 @@ __all__ = (
     "inject_cmd"
 )
 
-# PHILOSOPHY:: [I Like Grouped Commands]
+def _doc_only(func):
+    func.__doc_only__ = None
+    return func
 
+# PHILOSOPHY:: [I Like Grouped Commands]
 ## Types ##
 
 class CogCommandType(type):
@@ -54,7 +62,7 @@ class CogCommandType(type):
     using :func:`isinstance` builtin.
 
     """
-    def __new__(cls, name, bases, attrs):
+    def __new__(cls, name, bases, attrs, **kwargs):
         subcommands = {}
         command_cls = super().__new__(cls, name, bases, attrs)
         for base in reversed(command_cls.__mro__[0:-1]):
@@ -69,12 +77,19 @@ class CogCommandType(type):
 
 class CmdInitType(type):
     """Initializes a Command during definition"""
-    def __new__(cls, name, bases, attrs, **kwargs) -> object: # type: ignore
+    def __new__(cls, name, bases, attrs, **kwargs):
         meta_args = ()
         if '__init_args__' in attrs:
             meta_args = attrs['__init_args__']
             del attrs['__init_args__']
-        return super().__new__(cls, name, bases, attrs)(*meta_args, **kwargs)
+
+        klass = super().__new__(cls, name, bases, attrs)
+        if kwargs.get("_root", False):
+            try:
+                delattr(klass.main, "__doc_only__") # type: ignore
+            except AttributeError:
+                pass
+        return klass(*meta_args, **kwargs)
 
 class CogCmdInitType(CmdInitType, CogCommandType):
     """Initializes a Cog like Cmd during definition"""
@@ -83,75 +98,61 @@ class CogCmdInitType(CmdInitType, CogCommandType):
 
 ## Commands ##
 
-class Command(_Group):
+class Command(_Command):
     """A Command
 
     This is the base class for all Command classes defined in this package.
-    Even though this inherits from Group it won't add injected commands on definition
-    Instead use CCmd or add commands on intialisation.
 
     Attributes
     ----------
-    cogcmd : Optional[Union[:class:`disctools.commands.CCmd`, :class:`disctools.commands.ICCmd`]]
+    cogcmd : Optional[:class:`disctools.commands.CCmd`]
         The :class:`CogCmd` the Command belongs to.
-
-    Note
-    ----
-        This differs in six ways from :class:`discord.ext.commands.Command`
-            1. We declare a class instead of function.
-            2. The name is set to class name if not provided.
-            3. This is a subclass of :class:`discord.ext.commands.Group`
-            4. We shall decorate the class with :func:`inject` to return an instance.
-            5. `invoke_without_command` parameter defaults to `True`
-            6. The hooks are invoked in the following order ``Bot -> Cog -> CogCmd -> Command`` for before invoke and in reverse order for after.
-
-    Special Methods
-    ---------------
-    This class has four special methods.
-        1. ``main``
-        2. ``pre_invoke``
-        3. ``post_invoke``
-        4. ``on_error``
-
-    Each of these methods is expected to be a coroutine.
-    These methods have their parent as the second argument after ``self``.
-    for example, if a command is a part of a cog or cog-cmd then the argument of the special methods becomes ``(self, CogOrCogCMD, ctx, *args, **kwargs)``,
-    if a command is directly added to a bot then the argument becomes ``(self, ctx, *args, **kwargs)``
 
     Example
     -------
     .. code-block:: python
 
         class SomeCog(SomeCogAbstraction):
+            def __str__(self): return "SomeCog"
+
             @inject(aliases=["Test"])
             class test(Command):
-                async def pre_invoke(self, cog, ctx):
-                    return await SomePreInvokeAbs(cmd=self, cog=cog, ctx=ctx)
+                async def pre_invoke(self, ctx):
+                    await ctx.send(str(self.cog))
 
-                @staticmethod
-                async def main(cog, ctx, msg: str = "hi"):
-                    return await ctx.send(msg)
+                async def main(self, ctx, msg: str = "hi"):
+                    return await ctx.send(self.logic(msg))
 
-                async def post_invoke(self, inst, ctx):
-                    return await SomePostInvokeAbs(cmd=self, cog=cog, ctx=ctx)
+                def logic(self, s: str, me: bool = False) -> str:
+                    return ("Me: " * me) + ("You: " * (not me)) + s
 
-                async def on_error(self, cog, ctx, error):
+                async def post_invoke(self, ctx):
+                    await ctx.send(self.logic("Yes", True))
+
+                async def on_error(self, ctx, error):
                     try:
-                        await ctx.send("An error occurred")
+                        await ctx.send(f"An error occurred in {self} owned by {self.owner}")
                     except:
                         pass
+
+    Which will output the following for the invocation string ``test``::
+
+        SomeCog
+        You: hi
+        Me: Yes
+
+    or when an error occurs::
+
+        An error occurred in Test owned by SomeCog
+
     """
     def __init__(self, func=None, **kwargs):
         if func is None:
-            try:
-                func = self.main
-            except AttributeError as err:
-                raise AttributeError(
-                    "Subclass of disctools.commands.Command requires main method to be defined if func argument is None") from err
+            func = self.main
+            if hasattr(func, "__doc_only__"):
+                raise ValueError("main method must be overridded for subclass of disctools.commands.Command if func argument is None")
 
-        if not kwargs.get("invoke_without_command", None):
-            kwargs["invoke_without_command"] = True
-
+        kwargs.setdefault("invoke_without_command", True)
         super().__init__(func, **kwargs)
 
         if hasattr(self, "pre_invoke"):
@@ -170,47 +171,80 @@ class Command(_Group):
             if not iscoroutinefunction(self.on_error):
                 raise TypeError('The error handler must be a coroutine.')
 
-    # TODO:: Call this when either parent, cog, cogcmd is set. preferably without dunders
-    # def __ext_init__(self) -> None:
-    #     pass
-
-    def main_command(self, func):
-        """A decorator which sets the callback.
-
-        Parameters
-        ----------
-        func : Coroutine
-            A Coroutine which should be the command callback.
-
-        Returns
-        -------
-        Coroutine
-            The coroutine that was passed.
-        """
-        self.callback = func
-        return func
-
     async def __call__(self, *args, **kwargs):
-        if self.cogcmd is not None: # I guess this works for both decorated and class commands
-            return await self.callback(self.cogcmd, *args, **kwargs)
-        return await super().__call__(*args, **kwargs)
+        if self.cog is not None and not isinstance(self.callback, staticmethod):
+            return await self.callback(self.cog, *args, **kwargs)
+        return await self.callback(*args, **kwargs)
+
+    def __init_subclass__(cls, **kwargs) -> None:
+        if kwargs.get("_root", False):
+            print(cls)
+            strip_doc = {"pre_invoke", "main", "post_invoke", "on_error"}
+            for i in strip_doc:
+                i_func = getattr(cls, i, None)
+                if i_func:
+                    if hasattr(i_func, '__doc_only__'):
+                        try:
+                            del i_func.__doc__
+                        except AttributeError:
+                            pass
+        return super().__init_subclass__()
+
+    @property
+    def owner(self) -> Union[CCmd, Cog, GroupMixin, None]:
+        """Union[:class:`CCmd`, :class:`discord.ext.commands.Cog`, :class:`discord.ext.commands.core.GroupMixin`, None]:
+            The owner of the command, similar to :attr:`discord.ext.commands.Command.parent`"""
+        if getattr(self, "cogcmd", None):
+            return self.cogcmd
+        if getattr(self, "cog", None):
+            return self.cog
+        return self.parent
+
+    @_doc_only
+    async def pre_invoke(self, ctx):
+        """|overridecoro|
+        The before_invoke hook.
+
+        This can be over-rided as a static method.
+        The before_invoke decorator can be used to specify another callback
+        """
+        pass
+
+    @_doc_only
+    async def main(self, *args, **kwargs):
+        """|overridecoro|
+        The callback, this method is the body of the command
+        This can be over-rided as a static method.
+        """
+        pass
+
+    @_doc_only
+    async def post_invoke(self, ctx):
+        """|overridecoro|
+        The after_invoke hook.
+
+        This can be over-rided as a static method.
+        The after_invoke decorator can be used to specify another callback
+        """
+        pass
+
+    @_doc_only
+    async def on_error(self, ctx, error):
+        """|overridecoro|
+        The local command error handler.
+        """
+        pass
 
     async def dispatch_error(self, ctx, error):
         ctx.command_failed = True
         cog = self.cog
         cogcmd = self.cogcmd
 
-        try:
-            self.on_error
-        except AttributeError:
-            pass
-        else:
-            if cog:
-                await self.on_error(self.cog, ctx, error)
-            elif cogcmd is not None:
-                await self.on_error(self.cogcmd, ctx, error)
-            else:
-                await self.on_error(ctx, error)
+        if not hasattr(self.on_error, "__doc_only__"):
+            injected = wrap_callback(self.on_error)
+            if self._needs_cog(self.on_error):
+                await injected(cog, ctx, error)
+            await injected(ctx, error)
 
         if cogcmd is not None:
             await wrap_callback(cogcmd.on_subcommand_error)(ctx, error)
@@ -224,23 +258,35 @@ class Command(_Group):
         finally:
             ctx.bot.dispatch('command_error', ctx, error)
 
+    def _needs_cog(self, func) -> bool:
+        if self.cog is not None:
+            if ismethod(func):
+                if func.__self__ == self:
+                    return False
+                return True
+            elif func in self.__class__.__dict__.values():
+                return False
+            return True
+        return False
+
     @property
     def clean_params(self):
         """:meta private:""" # Has Been documented in dpy.
         result = self.params.copy()
-        if (self.cog is not None or self.cogcmd is not None) and not isinstance(self.callback, staticmethod):
-            result.popitem(last=False) # parent/self
+
+        if not ismethod(self.callback):
+             if self._needs_cog(self.callback) or self.cogcmd:
+                result.popitem(last=False) # self
 
         try:
             result.popitem(last=False) # ctx, we will have at least 2 standard params
         except Exception:
             raise ValueError('Missing context parameter') from None
-
         return result
 
     async def _parse_arguments(self, ctx: discord.ext.commands.Context):
-        par = self.cog or self.cogcmd
-        ctx.args = [ctx] if par is None else [par, ctx]
+        _cog = self._needs_cog(self.callback) or self.cogcmd
+        ctx.args =[self.cog, ctx] if _cog else [ctx]
         ctx.kwargs = {}
         args = ctx.args
         kwargs = ctx.kwargs
@@ -248,8 +294,8 @@ class Command(_Group):
         view = ctx.view
         iterator = iter(self.params.items())
 
-        if par is not None:
-            # we have ~~'self'~~ 'par' as the first parameter so just advance
+        if _cog:
+            # we have 'self' as the first parameter so just advance
             # the iterator and resume parsing
             try:
                 next(iterator)
@@ -307,23 +353,21 @@ class Command(_Group):
             await cogcmd.subcommand_before_invoke(ctx)
 
         if self._before_invoke is not None:
-            if cog:
-                await self._before_invoke(self.cog, ctx) # Parent
-            elif cogcmd:
-                await self._before_invoke(self.cogcmd, ctx)
+            if self._needs_cog(self._before_invoke):
+                _arg = (cog, ctx)
             else:
-                await self._before_invoke(ctx)
+                _arg = (ctx)
+            self.call_if_overridden(self._before_invoke, *_arg)
 
     async def call_after_hooks(self, ctx: discord.ext.commands.Context):
         cog = self.cog
         cogcmd = self.cogcmd
         if self._after_invoke is not None:
-            if cog:
-                await self._after_invoke(self.cog, ctx) # Parent
-            elif cogcmd:
-                await self._after_invoke(self.cogcmd, ctx)
+            if self._needs_cog(self._after_invoke):
+                _arg = (cog, ctx)
             else:
-                await self._after_invoke(ctx)
+                _arg = (ctx)
+            await self.call_if_overridden(self._after_invoke, *_arg)
 
         if cogcmd is not None:
             await cogcmd.subcommand_after_invoke(ctx)
@@ -339,7 +383,17 @@ class Command(_Group):
         if hook is not None:
             await hook(ctx)
 
-class CCmd(Command, metaclass=CogCommandType):
+    @staticmethod
+    async def call_if_overridden(method, *args, **kwargs):
+        method = getattr(method.__func__, "__doc_only__", method)
+        if method:
+            ret = method(*args, **kwargs)
+            if isawaitable(ret):
+                return await ret
+            return ret
+
+
+class CCmd(Command, _Group, metaclass=CogCommandType, _root=True):
     """Inherits from :class:`Command`.
 
     This picks up any :class:`discord.ext.commands.Command` instances as subcommands.
@@ -354,7 +408,6 @@ class CCmd(Command, metaclass=CogCommandType):
             # -- Let errors be raised ; DESC:: [This handles all the stuff that is
             self.add_command(i) #               usually done for an instance in a cog]
             i.cogcmd = self # This Will let subcommands access the CCmd to change the command behavior
-            # i.__ext_init__()
 
     async def on_subcommand_error(self, ctx: discord.ext.commands.Context, error):
         """|overridecoro|
@@ -380,7 +433,7 @@ class CCmd(Command, metaclass=CogCommandType):
 # Alias
 CogCmd = CCmd
 
-class ICommand(Command, metaclass=CmdInitType):
+class ICommand(Command, metaclass=CmdInitType, _root=True):
     """This class returns an instance on definition.
 
     This is a subclass of :class:`Command`
@@ -408,7 +461,8 @@ class ICommand(Command, metaclass=CmdInitType):
             super().__init__(func=func, **kwargs)
             del self.main
 
-class ICCmd(CCmd, metaclass=CogCmdInitType):
+
+class ICCmd(CCmd, metaclass=CogCmdInitType, _root=True):
     """This is similar to :class:`ICommand` but this class inherits from :class:`CCmd` instead.
 
     Metaclass of subclasses must be a subclass of :class:`CogCmdInitType`

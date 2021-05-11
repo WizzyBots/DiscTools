@@ -36,8 +36,8 @@ Bot = disctools.Bot("~")
 
 @Bot.inject(name="Test", invoke_without_subcommand=False)
 class test(disctools.CCmd):
-    async def main(self, ctx):
-        await ctx.send("PASS")
+    async def main(self, ctx, msg: str = ";-;"):
+        await ctx.send(msg)
 
     async def subcommand_before_invoke(self, ctx):
         await ctx.send("Test before hook PASS")
@@ -48,19 +48,19 @@ class test(disctools.CCmd):
     @disctools.inject()
     class First(disctools.Command):
         # Usage: `[p]Test First Hi!`
-        async def pre_invoke(self, parent, ctx):
+        async def pre_invoke(self, ctx):
             return await ctx.send("Preparing...")
 
-        async def main(self, parent, ctx, *, msg: str = "PASS"):
+        async def main(self, ctx, *, msg: str = "PASS"):
             return await ctx.send(msg)
 
-        async def post_invoke(self, parent, ctx):
+        async def post_invoke(self, ctx):
             return await ctx.send("Exiting...")
 
     class Second(disctools.ICommand, aliases=["s"]):
         # Usage: `[p]Test [Second|s] Hi!`
-        async def main(self, parent, ctx, *, msg: str = "PASS"):
-            """Interact with discord here, you may write everything here."""
+        async def main(self, ctx, *, msg: str = "PASS"):
+            """This is very nice command!"""
             return await ctx.send(self.logic(msg))
 
         async def logic(self, msg):
