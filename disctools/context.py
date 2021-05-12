@@ -22,14 +22,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import Optional, Sequence, Tuple, Union
+from typing import Optional, Sequence, Tuple, Union, TypeVar, cast
 
-import aiohttp
 import discord
 from discord.ext.commands import Context as _Context
 
+T = TypeVar('T', bound=discord.User, covariant=True)
 
-def _maybe_sequence(doubtful) -> Sequence:
+def _maybe_sequence(doubtful: Union[T, Sequence[T]]) -> Sequence[T]:
     if not isinstance(doubtful, Sequence):
         return [doubtful]
     else:
