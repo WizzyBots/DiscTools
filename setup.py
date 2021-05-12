@@ -35,9 +35,9 @@ setup(
     python_requires='>=3.8',
     extras_require={
         "docs": [
-            "Sphinx~=4.0.1",
-            "sphinx-rtd-theme~=0.5"
-            "sphinxcontrib-trio"
+            "Sphinx~=4.0",
+            "sphinx-rtd-theme~=0.5",
+            "sphinxcontrib-trio~=1.1"
         ]
     }
 )
