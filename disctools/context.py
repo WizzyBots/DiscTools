@@ -26,8 +26,9 @@ from typing import Optional, Sequence, Tuple, Union, TypeVar, cast
 
 import discord
 from discord.ext.commands import Context as _Context
+from discord.member import Member
 
-T = TypeVar('T', bound=discord.User, covariant=True)
+T = TypeVar('T', bound=discord.abc.User)
 
 def _maybe_sequence(doubtful: Union[T, Sequence[T]]) -> Sequence[T]:
     if not isinstance(doubtful, Sequence):
@@ -35,7 +36,7 @@ def _maybe_sequence(doubtful: Union[T, Sequence[T]]) -> Sequence[T]:
     else:
         return doubtful
 
-Targets = Union[discord.User, Sequence[discord.User]]
+Targets = Union[discord.abc.User, Sequence[discord.abc.User]]
 MemberTargets = Union[discord.Member, Sequence[discord.Member]]
 
 class TargetContext(_Context):
@@ -47,7 +48,7 @@ class TargetContext(_Context):
     ====
     The functions of this class can only be used when the message of the context belongs to a guild
     """
-    _target: Sequence[discord.User]
+    _target: Sequence[discord.abc.User]
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -55,8 +56,8 @@ class TargetContext(_Context):
         self.targets = self.message.mentions
 
     @property
-    def targets(self):
-        """Sequence[:class:`discord.User`] : A sequence of Users that were mentioned, this should be set on invoke.
+    def targets(self) -> Sequence[discord.abc.User]:
+        """Sequence[:class:`discord.abc.User`] : A sequence of Users that were mentioned, this should be set on invoke.
         By default it is set to a list of mentioned users in the message"""
         return self._target
 
@@ -69,12 +70,12 @@ class TargetContext(_Context):
         """:class:`bool`: This property is equivalent to ``ctx.is_user_target(ctx.author)``"""
         return self.author in self.targets
 
-    def is_user_target(self, user: discord.User) -> bool:
+    def is_user_target(self, user: discord.abc.User) -> bool:
         """Check if a user is a target
 
         Parameters
         ----------
-        user : :class:`discord.User`
+        user : :class:`discord.abc.User`
             The user to verify as target
 
         Returns
@@ -91,10 +92,13 @@ class TargetContext(_Context):
         if self.guild is None:
             raise ValueError(f"Expected discord.Guild instance at {self.__class__.__qualname__}.guild instead got None")
 
+        targets = cast(Sequence[Member], self.targets)
+
         if user == self.guild.owner:
             return True, None
+
         if users is None:
-            users = self.targets
+            users = targets
         else:
             users = _maybe_sequence(users)
 
@@ -162,14 +166,14 @@ class TargetContext(_Context):
         """
         return self._above_check(self.me, users)
 
-    async def whisper(self, user: Optional[Targets] = None,
+    async def whisper(self, users: Optional[Union[Sequence[discord.User], discord.User]] = None,
                       *args, **kwargs) -> None:
         """|coro|
         DM all targets of a command.
 
         Parameters
         ----------
-        user : Optional(Union[:class:`discord.User`, List[:class:`discord.User`]])
+        users : Optional(Union[:class:`discord.User`, List[:class:`discord.User`]])
             The user(s) to DM. Defaults to self.targets.
         args
             The positional arguments that should be used to message the targets.
@@ -180,13 +184,13 @@ class TargetContext(_Context):
         -------
             NoneType
         """
-        if user is None:
-            user = self.targets
-        if not isinstance(user, Sequence):
-            return await user.send(*args, **kwargs)
-        else:
-            for target in user:
-                target.send(*args, **kwargs)
+        if users is None:
+            # This could be a Member, but that doesn't matter
+            # since Member virtually inherits User
+            users = cast(Sequence[discord.User], self.targets)
+        users = _maybe_sequence(users)
+        for target in users:
+            target.send(*args, **kwargs)
 
 
 class EmbedingContext(_Context):

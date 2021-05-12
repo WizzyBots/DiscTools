@@ -20,33 +20,29 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from typing import Callable, Type, TypeVar
+
 from discord.ext.commands import AutoShardedBot as _AS
 from discord.ext.commands import Bot as _Bot
 from discord.ext.commands import GroupMixin as _GM
+from discord.ext.commands import Command as _C
+
+T = TypeVar("T", bound=_C)
 
 class InjectableBotMixin(_GM):
-    def inject(self, **kwargs):
-        """Inject a command class into the Bot.
+    def inject(self, **kwargs) -> Callable[[Type[T]], T]:
+        """
+        Inject a command class into the Bot.
 
         This is a decorator.
         """
-        def decorator(cls):
+        def decorator(cls: Type[T]) -> T:
             kwargs.setdefault('parent', self)
             result = cls(**kwargs)
             self.add_command(result)
             return result
 
         return decorator
-
-    def inject_cmd(self, inst) -> None:
-        """Inject a command instance into the Bot.
-
-        This is not a decorator, but a method.
-        Useful when you want to inject an imported command,
-        but don't want to subclass it to inject
-
-        """
-        return self.add_command(inst)
 
 class Bot(InjectableBotMixin, _Bot):
     """Represents a discord bot.

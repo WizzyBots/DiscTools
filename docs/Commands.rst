@@ -6,10 +6,6 @@ Command Types
 -------------
 .. autoclass:: disctools.commands.CogCommandType
 
-.. autoclass:: disctools.commands.CmdInitType
-
-.. autoclass:: disctools.commands.CogCmdInitType
-
 Commands
 --------
 .. autoclass:: disctools.commands.Command
@@ -21,54 +17,25 @@ Commands
 
 .. autoclass:: disctools.commands.CogCmd
 
-
-Pre-Injected Commands
----------------------
-Abstract
-********
-These classes use meta-classes to avoid using the :func:`disctools.commands.inject`
-In short: "These classes return an instance on definition"
-
-Why use these?
-**************
-If you write many commands then :func:`disctools.commands.inject` may become repetitive
-hence you can trade some readability and use implicit instance creation provided by these classes.
-
-.. note::
-    In case the need to subclass these classes arises, you may simply do the following.
-
-    .. code-block:: py
-
-        class MyICmd(metaclass=CmdInitType):
-            pass
-
-        MyICmd = MyICmd.__class__
-
-.. autoclass:: disctools.commands.ICommand
-
-.. autoclass:: disctools.commands.ICCmd
-
 Decorators
 ----------
 
-.. autofunction:: disctools.commands.inject
-
-.. autofunction:: disctools.commands.inject_cmd
-
+.. autodecorator:: disctools.commands.inject
 
 Differences
-===========
+-----------
 Differences from discord.py commands
 
 Checks
-------
+******
 Due to the way discord.py's decorators are written they can be used on the instance of the Command as well as the main method
 
 Example
-*******
+~~~~~~~
 
     .. code-block:: python3
 
+        # note that decorator is above the inject decorator
         @discord.ext.commands.guild_only()
         @disctools.inject(aliases=["test"])
         class Test(disctools.Command):
@@ -82,15 +49,23 @@ Example
                 elif isinstance(error, discord.ext.commands.NoPrivateMessage):
                     await ctx.send("I don't like DMs")
 
-You may apply decorators from :mod:`discord.ext.commands` on either the method or the class
+You may apply decorators from :mod:`discord.ext.commands` on either the method or the instance.
 
-Instance Checks
----------------
-All the Commands are a subclass of :class:`disctools.commands.Command`, hence to check if a command is a disctools command
-You may use ``isinstance(cmd, disctools.Command)``
+.. note::
+    You can not apply any decorators on the class. For example see the following.
+
+        .. code-block:: python3
+
+            @disctools.inject(...)
+            @discord.ext.commands.guild_only() # applied before initialiasation
+            class Test(disctools.Command):
+                ...
+
+    Will not work, since the check is applied on the class.
+
 
 Pre/Post Invoke Hook Order
---------------------------
+**************************
 Conventionally, the hooks are invoked in the following order::
 
     Command Specific before invoke hook
