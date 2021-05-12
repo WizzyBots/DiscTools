@@ -483,12 +483,12 @@ class ICCmd(CCmd, metaclass=CogCmdInitType, _root=True):
                               # Useful for some subclasses
             class SomeCmd(ICommand, name="first"):
                 @staticmethod
-                async def main(cog, ctx):
+                async def main(ctx):
                     await ctx.send("pass")
 
             @inject(name="second")
             class SomeOtherCmd(Command):
-                async def main(self, cog, ctx):
+                async def main(self, ctx):
                     await ctx.send("pass")
 
     """
