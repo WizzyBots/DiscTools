@@ -34,7 +34,7 @@ logging.basicConfig(
 )
 Bot = disctools.Bot("~")
 
-@Bot.inject(name="Test", invoke_without_subcommand=False)
+@Bot.inject(name="echo", invoke_without_subcommand=False)
 class test(disctools.CCmd):
     async def main(self, ctx, msg: str = ";-;"):
         await ctx.send(msg)
@@ -45,34 +45,21 @@ class test(disctools.CCmd):
     async def subcommand_after_invoke(self, ctx):
         await ctx.send("Test after hook PASS")
 
-    @disctools.inject()
-    class First(disctools.Command):
+    @disctools.inject(name="becho")
+    class better_echo(disctools.Command):
         # Usage: `[p]Test First Hi!`
         async def pre_invoke(self, ctx):
-            return await ctx.send("Preparing...")
+            return await ctx.send("I am gonna echo")
 
-        async def main(self, ctx, *, msg: str = "PASS"):
+        async def main(self, ctx, *, msg: str = "*silence*"):
             return await ctx.send(msg)
 
         async def post_invoke(self, ctx):
-            return await ctx.send("Exiting...")
-
-    class Second(disctools.ICommand, aliases=["s"]):
-        # Usage: `[p]Test [Second|s] Hi!`
-        async def main(self, ctx, *, msg: str = "PASS"):
-            """This is very nice command!"""
-            return await ctx.send(self.logic(msg))
-
-        async def logic(self, msg):
-            """Platform agnostic implementation of the command
-
-            This is not enforced but recommended; it's easier to migrate from discord
-            if the need arises in future"""
-            return msg
+            return await ctx.send("I echoed you!")
 
     # You may do this but, without disctools.Command you lose the self argument.
-    @commands.command(cls=disctools.Command, name="Third")
-    async def third(self, ctx, *, msg: str = "PASS"):
+    @commands.command(cls=disctools.Command, name="secho")
+    async def simple_echo(self, ctx, *, msg: str = "*silence echoes*"):
         return await ctx.send(msg)
 
 Bot.run("<TOKEN>")

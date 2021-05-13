@@ -10,13 +10,6 @@ class BotTest(unittest.TestCase):
     def setUp(self):
         self.bot = Bot("~")
         self.ABot = _AS("~")
-        self.cmd = Command(func=dummy, name="test")
-
-    def test_inject_cmd(self):
-        self.ABot.inject_cmd(self.cmd)
-        self.bot.inject_cmd(self.cmd)
-        self.assertIn(self.cmd, self.ABot.all_commands.values())
-        self.assertIn(self.cmd, self.bot.all_commands.values())
 
     def test_inject(self):
         class TestCMD(Command):
