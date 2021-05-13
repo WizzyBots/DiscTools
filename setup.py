@@ -23,8 +23,7 @@ setup(
     license='MIT',
     test_suite="tests",
     packages=[
-        "disctools",
-        "disctools.experimental"
+        "disctools"
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
@@ -38,6 +37,9 @@ setup(
             "Sphinx~=4.0",
             "sphinx-rtd-theme~=0.5",
             "sphinxcontrib-trio~=1.1"
+        ],
+        "dev": [
+            "mypy"
         ]
     }
 )
