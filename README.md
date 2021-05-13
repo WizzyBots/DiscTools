@@ -1,6 +1,7 @@
 ## [DiscTools](https://github.com/WizzyGeek/DiscTools)
 
 A discord.py helper library
+[![Documentation Status](https://readthedocs.org/projects/disctools/badge/?version=latest)](https://disctools.readthedocs.io/en/latest/?badge=latest)
 
 ### [Documentation](https://disctools.readthedocs.io)
 
