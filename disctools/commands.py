@@ -24,7 +24,7 @@ from __future__ import annotations
 from asyncio.coroutines import iscoroutinefunction
 from inspect import Parameter, isawaitable, ismethod
 from types import MethodType
-from typing import (Generic, TYPE_CHECKING, Any, Awaitable, Callable, Mapping, Optional,
+from typing import (Coroutine, Generic, TYPE_CHECKING, Any, Callable, Mapping, Optional, Tuple,
                     Type, TypeVar, Union)
 
 import discord
@@ -50,8 +50,7 @@ __all__ = (
     "inject"
 )
 
-
-AsyncCallable = Callable[..., Awaitable[Any]]
+AsyncCallable = Callable[..., Coroutine[Any, Any, Any]]
 T = TypeVar("T", bound=Callable)
 
 def _doc_only(func: T) -> T:
@@ -71,7 +70,7 @@ class CogCommandType(type):
     """
     def __new__(cls, name, bases, attrs, **kwargs):
         subcommands = {}
-        command_cls = super().__new__(cls, name, bases, attrs)
+        command_cls = super().__new__(cls, name, bases, attrs, **kwargs)
         for base in reversed(command_cls.__mro__[0:-1]):
             for name, attr in base.__dict__.items():
                 if isinstance(attr, _Command):
@@ -88,6 +87,7 @@ class Command(_Command, Generic[Context]):
     """A Command
 
     This is the base class for all Command classes defined in this package.
+    This is a generic type.
 
     Attributes
     ----------
@@ -101,8 +101,8 @@ class Command(_Command, Generic[Context]):
         class SomeCog(SomeCogAbstraction):
             def __str__(self): return "SomeCog"
 
-            @inject(aliases=["Test"])
-            class test(Command):
+            @inject(aliases=["test"])
+            class Test(Command):
                 async def pre_invoke(self, ctx):
                     await ctx.send(str(self.cog))
 
@@ -165,7 +165,7 @@ class Command(_Command, Generic[Context]):
         return await self.callback(*args, **kwargs)
 
     def __init_subclass__(cls, **kwargs) -> None:
-        if kwargs.get("_root", False):
+        if not kwargs.get("_root", False):
             strip_doc = {"pre_invoke", "main", "post_invoke", "on_error"}
             for i in strip_doc:
                 i_func = getattr(cls, i, None)
@@ -174,12 +174,20 @@ class Command(_Command, Generic[Context]):
                         try:
                             del i_func.__doc__
                         except AttributeError:
+                             # We should never reach here
                             pass
+            main_m = getattr(cls, "main", None)
+            if getattr(main_m, "__doc__", None) is None:
+                setattr(main_m, '__doc__', getattr(cls, '__doc__', None))
         return super().__init_subclass__()
 
     @property
-    def owner(self) -> Union[CCmd, Cog, GroupMixin, None]:
-        """Union[:class:`CCmd`, :class:`discord.ext.commands.Cog`, :class:`discord.ext.commands.core.GroupMixin`, None]:
+    def owner(self) -> Union[CCmd, Cog, GroupMixin, _Command, None]:
+        """Union[
+            :class:`CCmd`,
+            :class:`discord.ext.commands.Cog`,
+            :class:`discord.ext.commands.core.GroupMixin`,
+            :class:`discord.ext.commands.Command`, :obj:`None`]:
             The owner of the command, similar to :attr:`discord.ext.commands.Command.parent`"""
         if getattr(self, "cogcmd", None):
             return self.cogcmd
@@ -262,7 +270,7 @@ class Command(_Command, Generic[Context]):
         result = self.params.copy()
 
         if not ismethod(self.callback):
-             if self._needs_cog(self.callback) or self.cogcmd:
+             if self._needs_cog(self.callback):
                 result.popitem(last=False) # self
 
         try:
@@ -272,7 +280,7 @@ class Command(_Command, Generic[Context]):
         return result
 
     async def _parse_arguments(self, ctx: Context) -> None:
-        _cog = self._needs_cog(self.callback) or self.cogcmd
+        _cog = self._needs_cog(self.callback)
         ctx.args =[self.cog, ctx] if _cog else [ctx]
         ctx.kwargs = {}
         args = ctx.args
@@ -341,9 +349,9 @@ class Command(_Command, Generic[Context]):
 
         if self._before_invoke is not None:
             if self._needs_cog(self._before_invoke):
-                _arg = (cog, ctx)
+                _arg: Union[Tuple[Optional[Cog], Context], Tuple[Context]] = (cog, ctx)
             else:
-                _arg = (ctx)
+                _arg = (ctx,)
             self.call_if_overridden(self._before_invoke, *_arg)
 
     async def call_after_hooks(self, ctx: Context) -> None:
@@ -351,9 +359,9 @@ class Command(_Command, Generic[Context]):
         cogcmd = self.cogcmd
         if self._after_invoke is not None:
             if self._needs_cog(self._after_invoke):
-                _arg = (cog, ctx)
+                _arg: Union[Tuple[Optional[Cog], Context], Tuple[Context]] = (cog, ctx)
             else:
-                _arg = (ctx)
+                _arg = (ctx,)
             await self.call_if_overridden(self._after_invoke, *_arg)
 
         if cogcmd is not None:
@@ -382,16 +390,17 @@ class Command(_Command, Generic[Context]):
 
 class CCmd(Command[Context], _Group, metaclass=CogCommandType, _root=True):
     """Inherits from :class:`Command`.
+    This is a generic type.
 
-    This picks up any :class:`discord.ext.commands.Command` instances as subcommands.
+    Picks up any :class:`discord.ext.commands.Command` instances as subcommands.
     Any custom metaclass must be a subclass of :class:`CogCommandType` implementing
     any features on top of it.
 
-    It is also called ``CogCmd``
+    Also called :class:`CogCmd`
     """
     def __init__(self, func: Optional[AsyncCallable] = None, **kwargs):
         super().__init__(func=func, **kwargs)
-        for i in self.__fut_sub_cmds__.values():
+        for i in self.__class__.__fut_sub_cmds__.values():
             # -- Let errors be raised ; DESC:: [This handles all the stuff that is
             self.add_command(i) #               usually done for an instance in a cog]
             i.cogcmd = self

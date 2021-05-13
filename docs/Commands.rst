@@ -2,25 +2,49 @@ Commands
 ========
 These aim to provide more control over commands
 
+.. currentmodule:: disctools.commands
+
 Command Types
 -------------
-.. autoclass:: disctools.commands.CogCommandType
+.. autoclass:: CogCommandType
 
 Commands
 --------
-.. autoclass:: disctools.commands.Command
+
+.. autoclass:: Command
     :no-undoc-members:
     :members:
 
-.. autoclass:: disctools.commands.CCmd
+.. autoclass:: CCmd
     :members:
 
-.. autoclass:: disctools.commands.CogCmd
+.. autoclass:: CogCmd
+
+.. note::
+
+    :class:`Command` & :class:`CCmd` are generic in :class:`discord.ext.commands.Context`,
+    similar to `discord-ext-typed-commands <https://github.com/bryanforbes/discord-ext-typed-commands/>`_
+    Consider the following example:
+
+    .. code-block:: python3
+
+        class echo(disctools.Command[MyContext]):
+            ...
+
+        CT = TypeVar('CT', bound=discord.ext.commands.Context)
+        class MyCogCmd(disctools.CCmd[CT]):
+            def MySpecialMethod(self, ctx: CT) -> CT:
+                ...
+            ...
+
+        def setup(bot: MyBot):
+            bot.add_command(MyCogCmd[MyContext](name="test"))
+            ...
 
 Decorators
 ----------
 
-.. autodecorator:: disctools.commands.inject
+.. autodecorator:: inject
 
 Differences
 -----------

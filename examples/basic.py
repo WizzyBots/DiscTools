@@ -37,6 +37,7 @@ Bot = disctools.Bot("~")
 @Bot.inject(name="echo", invoke_without_subcommand=False)
 class test(disctools.CCmd):
     async def main(self, ctx, msg: str = ";-;"):
+        """Echo? anyone there? - [p]echo [msg]"""
         await ctx.send(msg)
 
     async def subcommand_before_invoke(self, ctx):
@@ -47,11 +48,11 @@ class test(disctools.CCmd):
 
     @disctools.inject(name="becho")
     class better_echo(disctools.Command):
-        # Usage: `[p]Test First Hi!`
         async def pre_invoke(self, ctx):
             return await ctx.send("I am gonna echo")
 
         async def main(self, ctx, *, msg: str = "*silence*"):
+            """Echo but better! - [p]echo becho [msg]"""
             return await ctx.send(msg)
 
         async def post_invoke(self, ctx):
@@ -60,6 +61,7 @@ class test(disctools.CCmd):
     # You may do this but, without disctools.Command you lose the self argument.
     @commands.command(cls=disctools.Command, name="secho")
     async def simple_echo(self, ctx, *, msg: str = "*silence echoes*"):
+        """Echo but dead simple - [p]echo secho [msg]"""
         return await ctx.send(msg)
 
 Bot.run("<TOKEN>")
