@@ -26,7 +26,6 @@ from typing import Optional, Sequence, Tuple, Union, TypeVar, cast
 
 import discord
 from discord.ext.commands import Context as _Context
-from discord.member import Member
 
 T = TypeVar('T', bound=discord.abc.User)
 
@@ -92,7 +91,7 @@ class TargetContext(_Context):
         if self.guild is None:
             raise ValueError(f"Expected discord.Guild instance at {self.__class__.__qualname__}.guild instead got None")
 
-        targets = cast(Sequence[Member], self.targets)
+        targets = cast(Sequence[discord.Member], self.targets) # type: ignore[redundant-cast]
 
         if user == self.guild.owner:
             return True, None
@@ -128,7 +127,7 @@ class TargetContext(_Context):
         Raises
         ------
         :exc:`TypeError`
-            users argument is not of specified type.
+            users argument is not of specified type or the attribute :attr:`_Context.author` is not a :class:`discord.Member` instance.
         :exc:`ValueError`
             guild attribute is None.
 
@@ -140,7 +139,9 @@ class TargetContext(_Context):
             first element will be False and second element will be the first user who is above the author.
             Example output: ``(True, None)``, ``(False, <discord.Member Object>)``.
         """
-        return self._above_check(self.author, users)
+        if isinstance(self.author, discord.Member):
+            return self._above_check(self.author, users)
+        raise TypeError(f"Message author is of type {type(self.author)}, expected discord.Member instance.")
 
     def is_bot_above(self,
                      users: Optional[MemberTargets] = None
@@ -155,7 +156,7 @@ class TargetContext(_Context):
         Raises
         ------
         :exc:`TypeError`
-            users argument is not of specified type.
+            users argument is not of specified type or the attribute :attr:`_Context.me` is not a :class:`discord.Member` instance.
         :exc:`ValueError`
             guild attribute is None.
 
@@ -164,7 +165,9 @@ class TargetContext(_Context):
         Tuple[:class:`bool`, Optional[:class:`discord.Member`]]
             Same as :meth:`TargetContext.is_author_above`. Only that the comparisn is with Bot.
         """
-        return self._above_check(self.me, users)
+        if isinstance(self.me, discord.Member):
+            return self._above_check(self.me, users)
+        raise TypeError(f"{self.__class__.__qualname__}.me is of type {type(self.me)}, expected discord.Member instance.")
 
     async def whisper(self, users: Optional[Union[Sequence[discord.User], discord.User]] = None,
                       *args, **kwargs) -> None:
@@ -187,7 +190,7 @@ class TargetContext(_Context):
         if users is None:
             # This could be a Member, but that doesn't matter
             # since Member virtually inherits User
-            users = cast(Sequence[discord.User], self.targets)
+            users = cast(Sequence[discord.User], self.targets) # type: ignore[redundant-cast]
         users = _maybe_sequence(users)
         for target in users:
             target.send(*args, **kwargs)
