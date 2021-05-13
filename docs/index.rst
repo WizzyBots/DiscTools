@@ -26,7 +26,6 @@ A basic Bot using DiscTools
    Bot.rst
    Context.rst
    Abstractions.rst
-   Experimental.rst
 
 
 Indices and tables
