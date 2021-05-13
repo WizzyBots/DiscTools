@@ -2,11 +2,12 @@ status_map = {
     "alpha": "a",
     "beta": "b",
     "release_candidate": "rc",
+    "rc": "rc",
     "final": "f"
 }
 
 class last_modified:
-    day = 12
+    day = 13
     month = 5
     year = 2021
 
@@ -61,7 +62,7 @@ class VersionInfo:
 version_info = VersionInfo(
     major = 0,
     minor = 5,
-    patch = 0,
+    patch = 1,
     status = status_map["beta"],
 )
 

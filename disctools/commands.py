@@ -198,7 +198,7 @@ class Command(_Command, Generic[Context]):
         pass
 
     @_doc_only
-    async def main(self, ctx: Context, *args, **kwargs) -> Any:
+    async def main(self, ctx: Context) -> Any:
         """|overridecoro|
         The callback, this method is the body of the command
         This can be over-rided as a static method.
@@ -380,7 +380,7 @@ class Command(_Command, Generic[Context]):
             return ret
 
 
-class CCmd(Command, _Group, metaclass=CogCommandType, _root=True):
+class CCmd(Command[Context], _Group, metaclass=CogCommandType, _root=True):
     """Inherits from :class:`Command`.
 
     This picks up any :class:`discord.ext.commands.Command` instances as subcommands.
@@ -394,7 +394,7 @@ class CCmd(Command, _Group, metaclass=CogCommandType, _root=True):
         for i in self.__fut_sub_cmds__.values():
             # -- Let errors be raised ; DESC:: [This handles all the stuff that is
             self.add_command(i) #               usually done for an instance in a cog]
-            i.cogcmd = self # This Will let subcommands access the CCmd to change the command behavior
+            i.cogcmd = self
 
     async def on_subcommand_error(self, ctx: Context, error: CommandError) -> Any:
         """|overridecoro|
