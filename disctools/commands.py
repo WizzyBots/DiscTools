@@ -398,12 +398,12 @@ class CCmd(Command[Context], _Group, metaclass=CogCommandType, _root=True):
 
     Also called :class:`CogCmd`
     """
-    def __init__(self, func: Optional[AsyncCallable] = None, **kwargs):
-        super().__init__(func=func, **kwargs)
-        for i in self.__class__.__fut_sub_cmds__.values():
-            # -- Let errors be raised ; DESC:: [This handles all the stuff that is
-            self.add_command(i) #               usually done for an instance in a cog]
-            i.cogcmd = self
+    def copy(self):
+        ret = super(Command, self).copy()
+        for cmd in map(lambda x: x.copy(), self.commands):
+            ret.add_command(cmd)
+            cmd.cogcmd = ret
+        return ret
 
     async def on_subcommand_error(self, ctx: Context, error: CommandError) -> Any:
         """|overridecoro|
@@ -431,7 +431,7 @@ CogCmd = CCmd
 
 ## Decorators ##
 
-G = TypeVar("G", bound=_Command)
+G = TypeVar("G", bound=Command)
 
 def inject(**kwargs) -> Callable[[Type[G]], G]:
     """This is a Decorator.
@@ -466,5 +466,10 @@ def inject(**kwargs) -> Callable[[Type[G]], G]:
     def decorator(cls: Type[G]) -> G:
         if isinstance(cls, _Command):
             raise TypeError("Can not inject a command instance, expected a <class 'type'>")
+        if issubclass(cls, CCmd):
+            self = cls(**kwargs)
+            for i in cls.__fut_sub_cmds__.values():
+                self.add_command(i)
+                i.cogcmd = self
         return cls(**kwargs)
     return decorator

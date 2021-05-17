@@ -20,7 +20,7 @@ status_map: Dict[str, Status] = {
 }
 
 class last_modified:
-    day = 13
+    day = 17
     month = 5
     year = 2021
 
@@ -93,7 +93,7 @@ class VersionInfo:
 version_info = VersionInfo(
     major = 0,
     minor = 5,
-    patch = 1,
+    patch = 2,
     status = status_map["final"],
 )
 
