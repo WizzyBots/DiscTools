@@ -398,6 +398,14 @@ class CCmd(Command[Context], _Group, metaclass=CogCommandType, _root=True):
 
     Also called :class:`CogCmd`
     """
+    def __init__(self, func: Optional[AsyncCallable] = None, **kwargs) -> None:
+        super().__init__(func=func, **kwargs)
+        if self.__class__.__fut_sub_cmds__:
+            for i in self.__class__.__fut_sub_cmds__.values():
+                self.add_command(i)
+                i.cogcmd = self
+            self.__class__.__fut_sub_cmds__ = False
+
     def copy(self):
         ret = super(Command, self).copy()
         for cmd in map(lambda x: x.copy(), self.commands):
@@ -466,10 +474,5 @@ def inject(**kwargs) -> Callable[[Type[G]], G]:
     def decorator(cls: Type[G]) -> G:
         if isinstance(cls, _Command):
             raise TypeError("Can not inject a command instance, expected a <class 'type'>")
-        if issubclass(cls, CCmd):
-            self = cls(**kwargs)
-            for i in cls.__fut_sub_cmds__.values():
-                self.add_command(i)
-                i.cogcmd = self
         return cls(**kwargs)
     return decorator

@@ -1,7 +1,9 @@
 ## [DiscTools](https://github.com/WizzyGeek/DiscTools)
 
-A discord.py helper library
+A discord.py helper library <br/>
+
 [![Documentation Status](https://readthedocs.org/projects/disctools/badge/?version=latest)](https://disctools.readthedocs.io/en/latest/?badge=latest)
+[![Upload Python Package](https://github.com/WizzyGeek/DiscTools/actions/workflows/python-publish.yml/badge.svg)](https://github.com/WizzyGeek/DiscTools/actions/workflows/python-publish.yml)
 
 ### [Documentation](https://disctools.readthedocs.io)
 
