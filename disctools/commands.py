@@ -404,10 +404,10 @@ class CCmd(Command[Context], _Group, metaclass=CogCommandType, _root=True):
             for i in self.__class__.__fut_sub_cmds__.values():
                 self.add_command(i)
                 i.cogcmd = self
-            self.__class__.__fut_sub_cmds__ = False
+            self.__class__.__fut_sub_cmds__.clear()
 
     def copy(self):
-        ret = super(Command, self).copy()
+        ret = _Command.copy(self)
         for cmd in map(lambda x: x.copy(), self.commands):
             ret.add_command(cmd)
             cmd.cogcmd = ret
