@@ -19,7 +19,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     install_requires=requirements,
-    url="https://github.com/WizzyGeek/DiscTools",
+    url="https://github.com/WizzyBots/DiscTools",
     license='MIT',
     test_suite="tests",
     packages=[
