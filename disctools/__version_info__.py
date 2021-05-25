@@ -1,4 +1,7 @@
 from typing import Dict, Literal, Optional, Protocol, Union
+from string import ascii_letters, digits
+
+valid_identifier_chars = ascii_letters + digits + "."
 
 class HasStr(Protocol):
     def __str__(self) -> str:
@@ -20,12 +23,13 @@ status_map: Dict[str, Status] = {
 }
 
 class last_modified:
-    day = 18
+    day = 25
     month = 5
     year = 2021
 
     @classmethod
     def date(cls) -> str:
+        """Returns date based version of format yyyy.[m]m.[d]d"""
         return f"{cls.year}.{cls.month}.{cls.day}"
 
 
@@ -37,19 +41,26 @@ class VersionInfo:
     patch: int
     status: Status
     serial: int
-    post: int
-    dev: int
+    post: Optional[int]
+    dev: Optional[int]
     build: Optional[Stringable]
 
     def __init__(self, *, major: int,
                  minor: int,
                  patch: int,
-                 status: Status,
+                 status: Optional[Status],
                  serial: int = 0,
-                 post: int = 0,
-                 dev: int = 0,
+                 post: Optional[int] = None,
+                 dev: Optional[int] = None,
                  build: Optional[Stringable] = None) -> None:
         ver = str(major)
+
+        if status:
+            if status not in status_map.values():
+                raise ValueError(f"status can only be one of ('a', 'b', 'rc', 'f')")
+        else:
+            status = "f"
+
         if minor:
             ver += f".{minor}"
 
@@ -64,16 +75,21 @@ class VersionInfo:
         elif serial != 0:
             raise ValueError("Final release cannot have a serial number!, use post instead.")
 
-        if post:
+        if not post is None:
             ver += f".post{post}"
 
-        if dev:
+        if not dev is None:
             ver += f".dev{dev}"
 
         if build:
+            build_s = str(build)
+            for i in build_s:
+                if i not in valid_identifier_chars:
+                    raise ValueError(
+                        f"build (Local Identifier) contains invalid character {i} at index {build_s.index(i)}")
             ver += f"+{build}"
 
-        self._ver = ver
+        self._ver = ver.strip()
         self.major = major
         self.minor = minor
         self.patch = patch
@@ -93,9 +109,8 @@ class VersionInfo:
 version_info = VersionInfo(
     major = 0,
     minor = 5,
-    patch = 3,
-    status = status_map["final"],
-    post = 1
+    patch = 4,
+    status = status_map["final"]
 )
 
 __version__ = str(version_info)
