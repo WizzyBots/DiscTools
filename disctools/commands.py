@@ -242,7 +242,7 @@ class Command(_Command, Generic[Context]):
             await injected(ctx, error)
 
         if cogcmd is not None:
-            await wrap_callback(cogcmd.on_subcommand_error)(ctx, error)
+            await wrap_callback(self.call_if_overridden)(cogcmd.on_subcommand_error, ctx, error)
 
         try:
             if cog is not None:
@@ -345,7 +345,7 @@ class Command(_Command, Generic[Context]):
                 await hook(ctx)
 
         if cogcmd is not None:
-            await cogcmd.subcommand_before_invoke(ctx)
+            await self.call_if_overridden(cogcmd.subcommand_before_invoke, ctx)
 
         if self._before_invoke is not None:
             if self._needs_cog(self._before_invoke):
@@ -365,7 +365,7 @@ class Command(_Command, Generic[Context]):
             await self.call_if_overridden(self._after_invoke, *_arg)
 
         if cogcmd is not None:
-            await cogcmd.subcommand_after_invoke(ctx)
+            await self.call_if_overridden(cogcmd.subcommand_after_invoke, ctx)
 
         # call the cog local hook if applicable:
         if cog is not None:
@@ -379,10 +379,13 @@ class Command(_Command, Generic[Context]):
             await hook(ctx)
 
     @staticmethod
-    async def call_if_overridden(method: MethodType, *args, **kwargs) -> Any:
-        method = getattr(method.__func__, "__doc_only__", method)
-        if method:
-            ret = method(*args, **kwargs)
+    async def call_if_overridden(member: Union[MethodType, Callable], *args, **kwargs) -> Any:
+        if isinstance(member, MethodType):
+            member = getattr(member.__func__, "__doc_only__", member)
+        else:
+            member = getattr(member, "__doc_only__", member)
+        if member:
+            ret = member(*args, **kwargs)
             if isawaitable(ret):
                 return await ret
             return ret
@@ -413,6 +416,7 @@ class CCmd(Command[Context], _Group, metaclass=CogCommandType, _root=True):
             cmd.cogcmd = ret
         return ret
 
+    @_doc_only
     async def on_subcommand_error(self, ctx: Context, error: CommandError) -> Any:
         """|overridecoro|
 
@@ -420,6 +424,7 @@ class CCmd(Command[Context], _Group, metaclass=CogCommandType, _root=True):
         """
         pass
 
+    @_doc_only
     async def subcommand_before_invoke(self, ctx: Context) -> Any:
         """|overridecoro|
 
@@ -427,6 +432,7 @@ class CCmd(Command[Context], _Group, metaclass=CogCommandType, _root=True):
         """
         pass
 
+    @_doc_only
     async def subcommand_after_invoke(self, ctx: Context) -> Any:
         """|overridecoro|
 
