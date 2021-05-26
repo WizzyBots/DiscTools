@@ -24,7 +24,7 @@ from __future__ import annotations
 from asyncio.coroutines import iscoroutinefunction
 from inspect import Parameter, isawaitable, ismethod
 from types import MethodType
-from typing import (Coroutine, Generic, TYPE_CHECKING, Any, Callable, Mapping, Optional, Tuple,
+from typing import (ClassVar, Coroutine, Generic, TYPE_CHECKING, Any, Callable, Mapping, Optional, Tuple,
                     Type, TypeVar, Union)
 
 import discord
@@ -133,10 +133,14 @@ class Command(_Command, Generic[Context]):
 
     """
     cogcmd: Optional[CCmd]
+    use_main: ClassVar[bool] = False
 
     def __init__(self, func: Optional[AsyncCallable] = None, **kwargs) -> None:
-        if func is None:
+        if func is None or self.use_main:
             func = self.main
+            self.__class__.use_main = True
+            if Command.main.__doc__:
+                del Command.main.__doc__
             if hasattr(func, "__doc_only__"):
                 raise ValueError("main method must be overridded for subclass of disctools.commands.Command if func argument is None")
 
@@ -165,17 +169,13 @@ class Command(_Command, Generic[Context]):
         return await self.callback(*args, **kwargs)
 
     def __init_subclass__(cls, **kwargs) -> None:
+        # I have kept this here so that, if any code divers
+        # Want to make a command without a docstring
+        # for some reason, besides it gives me peace of mind
+        # to know that docstrings wont be messed with at doctime
         if not kwargs.get("_root", False):
-            strip_doc = {"pre_invoke", "main", "post_invoke", "on_error"}
-            for i in strip_doc:
-                i_func = getattr(cls, i, None)
-                if i_func:
-                    if hasattr(i_func, '__doc_only__'):
-                        try:
-                            del i_func.__doc__
-                        except AttributeError:
-                             # We should never reach here
-                            pass
+            # Assign class's doc to main mehod
+            # if main method doesn't have the doc
             main_m = getattr(cls, "main", None)
             if getattr(main_m, "__doc__", None) is None:
                 setattr(main_m, '__doc__', getattr(cls, '__doc__', None))
@@ -352,7 +352,7 @@ class Command(_Command, Generic[Context]):
                 _arg: Union[Tuple[Optional[Cog], Context], Tuple[Context]] = (cog, ctx)
             else:
                 _arg = (ctx,)
-            self.call_if_overridden(self._before_invoke, *_arg)
+            await self.call_if_overridden(self._before_invoke, *_arg)
 
     async def call_after_hooks(self, ctx: Context) -> None:
         cog = self.cog
