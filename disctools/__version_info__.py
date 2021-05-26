@@ -23,7 +23,7 @@ status_map: Dict[str, Status] = {
 }
 
 class last_modified:
-    day = 25
+    day = 26
     month = 5
     year = 2021
 
