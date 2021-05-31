@@ -109,8 +109,9 @@ class VersionInfo:
 version_info = VersionInfo(
     major = 0,
     minor = 5,
-    patch = 4,
-    status = status_map["final"]
+    patch = 5,
+    status = status_map["final"],
+    dev = 0
 )
 
 __version__ = str(version_info)

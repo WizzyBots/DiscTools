@@ -37,7 +37,6 @@ class InjectableBotMixin(_GM):
         This is a decorator.
         """
         def decorator(cls: Type[T]) -> T:
-            kwargs.setdefault('parent', self)
             result = cls(**kwargs)
             self.add_command(result)
             return result

@@ -22,16 +22,17 @@
 from __future__ import annotations
 
 from asyncio.coroutines import iscoroutinefunction
-from inspect import Parameter, isawaitable, ismethod
-from types import MethodType
+from inspect import Parameter, isawaitable, isclass, ismethod
+from types import FunctionType, MethodType
 from typing import (ClassVar, Coroutine, Generic, TYPE_CHECKING, Any, Callable, Mapping, Optional, Tuple,
                     Type, TypeVar, Union)
 
-import discord
+# import discord
+from discord.errors import ClientException
 from discord.ext.commands import Cog
 from discord.ext.commands import Command as _Command
 from discord.ext.commands import Group as _Group
-from discord.ext.commands.core import wrap_callback
+from discord.ext.commands.core import command, group, wrap_callback
 from discord.ext.commands.errors import TooManyArguments
 from discord.ext.commands import Context as _Cont
 
@@ -61,12 +62,20 @@ def _doc_only(func: T) -> T:
 ## Types ##
 
 class CogCommandType(type):
-    """This is adds Cog like behavior to Commands.
+    """This is the metaclass for :class:`.CCmd`
 
-    This adds functionality to implicitly register Command objects as Sub Commands.
-    This Meta only picks :class:`discord.ext.commands.Command` instances
-    using :func:`isinstance` builtin.
+    Registers class attributes which are of type :class:`discord.ext.commands.Command`,
+    and have a falsy :attr:`discord.ext.commands.Command.parent` attribute.
 
+    Basically registers all 'parent-less' which are defined in the body of the class.
+
+    Internal Workings
+    -----------------
+    Adds an attribute named ``__fut_sub_cmds__`` of type ``Dict[str, discord.ext.commands.Command]``
+    to the class. On the first initialisation of the class, the commands are registered as subcommands.
+    All the instances following the first do not register the subcommands as they are assumed to be
+    copies of the first instance, hence their proper initialiasation is assumed to be handled by
+    the (``copy()`` method of the) first instance of the class.
     """
     def __new__(cls, name, bases, attrs, **kwargs):
         subcommands = {}
@@ -76,7 +85,8 @@ class CogCommandType(type):
                 if isinstance(attr, _Command):
                     if name in subcommands:
                         del subcommands[name]
-                    subcommands[name] = attr
+                    if not attr.parent:
+                        subcommands[name] = attr
         else:
             command_cls.__fut_sub_cmds__ = subcommands
         return command_cls
@@ -296,14 +306,14 @@ class Command(_Command, Generic[Context]):
                 next(iterator)
             except StopIteration:
                 fmt = 'Callback for {0.name} command is missing "self" parameter.'
-                raise discord.ClientException(fmt.format(self))
+                raise ClientException(fmt.format(self))
 
         # next we have the 'ctx' as the next parameter
         try:
             next(iterator)
         except StopIteration:
             fmt = 'Callback for {0.name} command is missing "ctx" parameter.'
-            raise discord.ClientException(fmt.format(self))
+            raise ClientException(fmt.format(self))
 
         for name, param in iterator:
             if param.kind == param.POSITIONAL_OR_KEYWORD:
@@ -390,7 +400,6 @@ class Command(_Command, Generic[Context]):
                 return await ret
             return ret
 
-
 class CCmd(Command[Context], _Group, metaclass=CogCommandType, _root=True):
     """Inherits from :class:`Command`.
     This is a generic type.
@@ -410,7 +419,7 @@ class CCmd(Command[Context], _Group, metaclass=CogCommandType, _root=True):
             self.__class__.__fut_sub_cmds__.clear()
 
     def copy(self):
-        ret = _Command.copy(self)
+        ret: CCmd = _Command.copy(self)
         for cmd in map(lambda x: x.copy(), self.commands):
             ret.add_command(cmd)
             cmd.cogcmd = ret
@@ -440,6 +449,68 @@ class CCmd(Command[Context], _Group, metaclass=CogCommandType, _root=True):
         """
         pass
 
+    def command(self, *args, **kwargs):
+        """This is a Decorator.
+
+        Same as :method:`discord.ext.commmands.GroupMixin.command`:, but the decorator also works on classes
+
+        Parameters
+        ----------
+        args
+            The posititional args to use to initialise the class
+        kwargs
+            The key-word arguments to use to initialise the class.
+
+        Returns
+        -------
+        Callable[[Union[:class:`types.FunctionType`, Type[:class:`discord.ext.commands.Command`]]], :class:`discord.ext.commands.Command`]
+            The decorator which returns the instance.
+            Raises :exc:`ValueError` if used on a class which isn't a :class:`discord.ext.commands.Command` subclass.
+        """
+        def decorator(obj: Union[FunctionType, Type[_Command]]) -> _Command:
+            kwargs.setdefault('parent', self)
+            if isinstance(obj, type):
+                if issubclass(obj, _Command):
+                    result = obj(*args, **kwargs)
+                else:
+                    raise ValueError(f"Expected discord.ext.commands.Command subclass got {type(obj)}")
+            else:
+                result = command(*args, **kwargs)(obj)
+            self.add_command(result)
+            return result
+
+        return decorator
+
+    def group(self, *args, **kwargs):
+        """This is a Decorator.
+
+        Same as :method:`discord.ext.commmands.GroupMixin.command`:, but the decorator also works on classes
+
+        Parameters
+        ----------
+        args
+            The posititional args to use to initialise the class
+        kwargs
+            The key-word arguments to use to initialise the class.
+
+        Returns
+        -------
+        Callable[[Union[:class:`types.FunctionType`, Type[:class:`discord.ext.commands.Command`]]], :class:`discord.ext.commands.Command`]
+            The decorator which returns the instance.
+            Raises :exc:`ValueError` if used on a class which isn't a :class:`discord.ext.commands.Command` subclass.
+        """
+        def decorator(obj: Union[FunctionType, Type[_Group]]) -> _Group:
+            kwargs.setdefault('parent', self)
+            if isinstance(obj, type):
+                if issubclass(obj, _Group):
+                    result = obj(*args, **kwargs)
+                else:
+                    raise ValueError(f"Expected discord.ext.commands.Group subclass got {type(obj)}")
+            else:
+                result = group(*args, **kwargs)(obj)
+            self.add_command(result)
+            return result
+        return decorator
 # Alias
 CogCmd = CCmd
 
@@ -447,13 +518,15 @@ CogCmd = CCmd
 
 G = TypeVar("G", bound=Command)
 
-def inject(**kwargs) -> Callable[[Type[G]], G]:
+def inject(*args, **kwargs) -> Callable[[Type[G]], G]:
     """This is a Decorator.
 
     Return a class's instance
 
     Parameters
     ----------
+    args
+        The positional arguments to use to initialise the class.
     kwargs
         The Key-word arguments to use to initialise the class.
 
@@ -480,5 +553,5 @@ def inject(**kwargs) -> Callable[[Type[G]], G]:
     def decorator(cls: Type[G]) -> G:
         if isinstance(cls, _Command):
             raise TypeError("Can not inject a command instance, expected a <class 'type'>")
-        return cls(**kwargs)
+        return cls(*args, **kwargs)
     return decorator
