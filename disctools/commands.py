@@ -61,6 +61,8 @@ def _doc_only(func: T) -> T:
 # PHILOSOPHY:: [I Like Grouped Commands]
 ## Types ##
 
+# TODO:: [Determine wether our callback is supposed to act as a method]
+
 class CogCommandType(type):
     """This is the metaclass for :class:`.CCmd`
 
@@ -263,6 +265,13 @@ class Command(_Command, Generic[Context]):
         finally:
             ctx.bot.dispatch('command_error', ctx, error)
 
+    def _needs_ccmd(self, func: Callable) -> bool:
+        if self.cogcmd is not None:
+            if self.__class__ not in self.cogcmd.__class__.__dict__.values():
+                if str(self.cogcmd.__class__) in func.__qualname__:
+                    return True
+        return False
+
     def _needs_cog(self, func: Union[AsyncCallable, MethodType]) -> bool:
         if self.cog is not None:
             if isinstance(func, MethodType): # Helps typing
@@ -280,7 +289,7 @@ class Command(_Command, Generic[Context]):
         result = self.params.copy()
 
         if not ismethod(self.callback):
-             if self._needs_cog(self.callback):
+             if self._needs_cog(self.callback) or self._needs_ccmd(self.callback):
                 result.popitem(last=False) # self
 
         try:
@@ -291,7 +300,7 @@ class Command(_Command, Generic[Context]):
 
     async def _parse_arguments(self, ctx: Context) -> None:
         _cog = self._needs_cog(self.callback)
-        ctx.args =[self.cog, ctx] if _cog else [ctx]
+        ctx.args = [(self.cogcmd, self.cog)[_cog], ctx] if _cog or self._needs_ccmd(self.callback) else [ctx]
         ctx.kwargs = {}
         args = ctx.args
         kwargs = ctx.kwargs
