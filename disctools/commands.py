@@ -249,8 +249,9 @@ class Command(_Command, Generic[Context]):
 
         if not hasattr(self.on_error, "__doc_only__"):
             injected = wrap_callback(self.on_error)
-            if self._needs_cog(self.on_error):
-                await injected(cog, ctx, error)
+            _earg = self._get_extra_arg(self.on_error)
+            if _earg:
+                await injected(_earg, ctx, error)
             await injected(ctx, error)
 
         if cogcmd is not None:
@@ -266,22 +267,32 @@ class Command(_Command, Generic[Context]):
             ctx.bot.dispatch('command_error', ctx, error)
 
     def _needs_ccmd(self, func: Callable) -> bool:
-        if self.cogcmd is not None:
-            if self.__class__ not in self.cogcmd.__class__.__dict__.values():
-                if str(self.cogcmd.__class__) in func.__qualname__:
-                    return True
+        if self.cogcmd is not None and not isinstance(func, MethodType):
+            try:
+                par = func.__qualname__.split(".")[-2]
+            except IndexError:
+                return False
+            if self.cogcmd.__class__.__name__ == par:
+                return True
         return False
 
     def _needs_cog(self, func: Union[AsyncCallable, MethodType]) -> bool:
-        if self.cog is not None:
-            if isinstance(func, MethodType): # Helps typing
-                if func.__self__ == self:
-                    return False
-                return True
-            elif func in self.__class__.__dict__.values():
+        if self.cog is not None and not isinstance(func, MethodType):
+            try:
+                par = func.__qualname__.split(".")[-2]
+            except IndexError:
                 return False
-            return True
+            if self.cog.__class__.__name__ == par:
+                return True
+            return False
         return False
+
+    def _get_extra_arg(self, func: Callable) -> Union[Cog, CCmd, None]:
+        if self._needs_ccmd(func):
+            return self.cogcmd
+        if self._needs_cog(func):
+            return self.cog
+        return None
 
     @property
     def clean_params(self) -> Mapping[str, Parameter]:
@@ -289,7 +300,7 @@ class Command(_Command, Generic[Context]):
         result = self.params.copy()
 
         if not ismethod(self.callback):
-             if self._needs_cog(self.callback) or self._needs_ccmd(self.callback):
+            if self._needs_cog(self.callback) or self._needs_ccmd(self.callback):
                 result.popitem(last=False) # self
 
         try:
@@ -299,8 +310,8 @@ class Command(_Command, Generic[Context]):
         return result
 
     async def _parse_arguments(self, ctx: Context) -> None:
-        _cog = self._needs_cog(self.callback)
-        ctx.args = [(self.cogcmd, self.cog)[_cog], ctx] if _cog or self._needs_ccmd(self.callback) else [ctx]
+        _earg = self._get_extra_arg(self.callback)
+        ctx.args = [_earg, ctx] if _earg else [ctx]
         ctx.kwargs = {}
         args = ctx.args
         kwargs = ctx.kwargs
@@ -308,7 +319,7 @@ class Command(_Command, Generic[Context]):
         view = ctx.view
         iterator = iter(self.params.items())
 
-        if _cog:
+        if _earg:
             # we have 'self' as the first parameter so just advance
             # the iterator and resume parsing
             try:
@@ -367,8 +378,9 @@ class Command(_Command, Generic[Context]):
             await self.call_if_overridden(cogcmd.subcommand_before_invoke, ctx)
 
         if self._before_invoke is not None:
-            if self._needs_cog(self._before_invoke):
-                _arg: Union[Tuple[Optional[Cog], Context], Tuple[Context]] = (cog, ctx)
+            _earg = self._get_extra_arg(self._before_invoke)
+            if _earg:
+                _arg: Union[Tuple[Union[Cog, CCmd, None], Context], Tuple[Context]] = (_earg, ctx)
             else:
                 _arg = (ctx,)
             await self.call_if_overridden(self._before_invoke, *_arg)
@@ -377,8 +389,9 @@ class Command(_Command, Generic[Context]):
         cog = self.cog
         cogcmd = self.cogcmd
         if self._after_invoke is not None:
-            if self._needs_cog(self._after_invoke):
-                _arg: Union[Tuple[Optional[Cog], Context], Tuple[Context]] = (cog, ctx)
+            _earg = self._get_extra_arg(self._after_invoke)
+            if _earg:
+                _arg: Union[Tuple[Union[Cog, CCmd, None], Context], Tuple[Context]] = (_earg, ctx)
             else:
                 _arg = (ctx,)
             await self.call_if_overridden(self._after_invoke, *_arg)
