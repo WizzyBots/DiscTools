@@ -41,10 +41,10 @@ class test(disctools.CCmd):
         await ctx.send(msg)
 
     async def subcommand_before_invoke(self, ctx):
-        await ctx.send("Test before hook PASS")
+        await ctx.send("=======echo=======")
 
     async def subcommand_after_invoke(self, ctx):
-        await ctx.send("Test after hook PASS")
+        await ctx.send("=====echo end=====")
 
     @disctools.inject(name="becho")
     class better_echo(disctools.Command):
@@ -63,5 +63,10 @@ class test(disctools.CCmd):
     async def simple_echo(self, ctx, *, msg: str = "*silence echoes*"):
         """Echo but dead simple - [p]echo secho [msg]"""
         return await ctx.send(msg)
+
+    @simple_echo.error
+    async def on_err(self, ctx, err):
+        await ctx.send("Something went wrong")
+        print(err)
 
 Bot.run("<TOKEN>")
