@@ -110,8 +110,7 @@ version_info = VersionInfo(
     major = 0,
     minor = 5,
     patch = 5,
-    status = status_map["final"],
-    dev = 1
+    status = status_map["final"]
 )
 
 __version__ = str(version_info)
